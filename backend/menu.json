@@ -1,0 +1,19 @@
+{
+    "categories": [
+      {
+        "name": "Tea",
+        "items": [
+          { "name": "Green Tea", "price": 2.800 },
+          { "name": "Mint Tea", "price": 3 }
+        ]
+      },
+      {
+        "name": "Coffee",
+        "items": [
+          { "name": "Espresso", "price": 6 },
+          { "name": "Latte", "price": 5 }
+        ]
+      }
+    ]
+  }
+  
