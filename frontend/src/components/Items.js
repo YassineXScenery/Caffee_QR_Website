@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiDollarSign, FiTag } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -10,6 +11,9 @@ function Items() {
   const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [editingItem, setEditingItem] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
     loadItems();
@@ -17,12 +21,16 @@ function Items() {
   }, []);
 
   const loadItems = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
       const response = await axios.get(`${API_URL}/items`);
       setItems(response.data);
     } catch (error) {
       console.error('Error loading items:', error);
-      alert('Failed to load items');
+      setError('Failed to load items');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -35,70 +43,53 @@ function Items() {
       }
     } catch (error) {
       console.error('Error loading categories:', error);
-      alert('Failed to load categories');
+      setError('Failed to load categories');
     }
   };
 
-  const addItem = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     const parsedPrice = parseFloat(price);
+    
     if (!itemName.trim()) {
-      alert('Please enter an item name');
+      setError('Please enter an item name');
       return;
     }
     if (!categoryId) {
-      alert('Please select a category');
+      setError('Please select a category');
       return;
     }
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      alert('Please enter a valid price');
+      setError('Please enter a valid price');
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
     try {
-      await axios.post(`${API_URL}/items`, {
-        name: itemName,
-        category_id: parseInt(categoryId),
-        price: parsedPrice
-      });
-      setItemName('');
-      setCategoryId('');
-      setPrice('');
+      if (editingItem) {
+        await axios.put(`${API_URL}/items/${editingItem.id}`, {
+          name: itemName,
+          category_id: parseInt(categoryId),
+          price: parsedPrice
+        });
+        setSuccess('Item updated successfully!');
+      } else {
+        await axios.post(`${API_URL}/items`, {
+          name: itemName,
+          category_id: parseInt(categoryId),
+          price: parsedPrice
+        });
+        setSuccess('Item added successfully!');
+      }
+      resetForm();
       loadItems();
     } catch (error) {
-      console.error('Error adding item:', error);
-      alert(error.response?.data?.error || 'Failed to add item');
-    }
-  };
-
-  const updateItem = async () => {
-    const parsedPrice = parseFloat(price);
-    if (!itemName.trim()) {
-      alert('Item name cannot be empty');
-      return;
-    }
-    if (!categoryId) {
-      alert('Please select a category');
-      return;
-    }
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      alert('Please enter a valid price');
-      return;
-    }
-
-    try {
-      await axios.put(`${API_URL}/items/${editingItem.id}`, {
-        name: itemName,
-        category_id: parseInt(categoryId),
-        price: parsedPrice
-      });
-      setItemName('');
-      setCategoryId('');
-      setPrice('');
-      setEditingItem(null);
-      loadItems();
-    } catch (error) {
-      console.error('Error updating item:', error);
-      alert(error.response?.data?.error || 'Failed to update item');
+      console.error('Error saving item:', error);
+      setError(error.response?.data?.error || 'Failed to save item');
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setSuccess(null), 3000);
     }
   };
 
@@ -107,12 +98,18 @@ function Items() {
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
     try {
       await axios.delete(`${API_URL}/items/${id}`);
+      setSuccess('Item deleted successfully!');
       loadItems();
     } catch (error) {
       console.error('Error deleting item:', error);
-      alert(error.response?.data?.error || 'Failed to delete item');
+      setError(error.response?.data?.error || 'Failed to delete item');
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setSuccess(null), 3000);
     }
   };
 
@@ -123,68 +120,209 @@ function Items() {
     setPrice(item.price.toString());
   };
 
+  const resetForm = () => {
+    setItemName('');
+    setCategoryId('');
+    setPrice('');
+    setEditingItem(null);
+  };
+
   return (
-    <section>
-      <h2 className="text-2xl font-semibold mb-4">Items</h2>
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          placeholder="Enter item name"
-          className="p-2 border rounded flex-1"
-        />
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className="p-2 border rounded"
-        >
-          <option value="">Select Category</option>
-          {categories.map(category => (
-            <option key={category.id} value={category.id}>
-              {category.categorie}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="Enter price"
-          step="0.01"
-          className="p-2 border rounded w-32"
-        />
-        {editingItem ? (
-          <button onClick={updateItem} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
-            Update Item
-          </button>
-        ) : (
-          <button onClick={addItem} className="bg-green-500 text-white p-2 rounded hover:bg-green-600">
-            Add Item
-          </button>
-        )}
-        {editingItem && (
-          <button onClick={() => { setEditingItem(null); setItemName(''); setCategoryId(''); setPrice(''); }} className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600">
-            Cancel
-          </button>
-        )}
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Menu Items
+          <span className="ml-2 text-sm font-medium px-2.5 py-0.5 rounded bg-blue-100 text-blue-800">
+            {items.length} {items.length === 1 ? 'item' : 'items'}
+          </span>
+        </h1>
       </div>
-      <ul className="space-y-2">
-        {items.map(item => (
-          <li key={item.id} className="flex justify-between items-center bg-white p-3 rounded shadow">
-            <span>{item.name} (Category ID: {item.category_id}) - ${item.price}</span>
-            <div>
-              <button onClick={() => startEditing(item)} className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">
-                Edit
-              </button>
-              <button onClick={() => deleteItem(item.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                Delete
-              </button>
+
+      {/* Form Card */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8 transition-all duration-300 hover:shadow-lg">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            {editingItem ? 'Edit Item' : 'Add New Item'}
+          </h2>
+          
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Item Name
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiTag className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="itemName"
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    placeholder="Enter item name"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.categorie}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                  Price (DT)
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiDollarSign className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="number"
+                    id="price"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
-          </li>
-        ))}
-      </ul>
-    </section>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
+              >
+                {isLoading ? (
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : editingItem ? (
+                  <FiCheck className="mr-1" />
+                ) : (
+                  <FiPlus className="mr-1" />
+                )}
+                {isLoading ? 'Processing...' : editingItem ? 'Update Item' : 'Add Item'}
+              </button>
+              
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                >
+                  <FiX className="inline mr-1" />
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Status Messages */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-700">{success}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Items List */}
+      {isLoading && items.length === 0 ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-gray-200 h-12 w-12"></div>
+          </div>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No items</h3>
+          <p className="mt-1 text-sm text-gray-500">Get started by adding your first menu item.</p>
+        </div>
+      ) : (
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <ul className="divide-y divide-gray-200">
+            {items.map((item) => (
+              <li key={item.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-medium text-gray-800">{item.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {item.categorie} • {item.price} DT
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => startEditing(item)}
+                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                      title="Edit"
+                    >
+                      <FiEdit2 className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => deleteItem(item.id)}
+                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
+                      title="Delete"
+                    >
+                      <FiTrash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 

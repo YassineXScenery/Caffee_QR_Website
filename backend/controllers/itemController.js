@@ -31,18 +31,40 @@ exports.createItem = (req, res) => {
   );
 };
 
-// READ ALL
+// READ ALL (with categorie from menu table)
 exports.getItems = (req, res) => {
   console.log("GET request for /api/items");
 
-  db.query("SELECT item_id AS id, item_name AS name, category_id, item_price AS price FROM items", (err, results) => {
-    if (err) {
-      console.error("Error retrieving items:", err);
-      return res.status(500).json({ error: "Failed to retrieve items" });
+  db.query(
+    `SELECT i.item_id AS id, i.item_name AS name, i.category_id, m.categorie, i.item_price AS price 
+     FROM items i 
+     JOIN menu m ON i.category_id = m.id`,
+    (err, results) => {
+      if (err) {
+        console.error("Error retrieving items:", err);
+        return res.status(500).json({ error: "Failed to retrieve items" });
+      }
+      console.log("Items retrieved:", results);
+      res.status(200).json(results);
     }
-    console.log("Items retrieved:", results);
-    res.status(200).json(results);
-  });
+  );
+};
+
+// READ ALL (basic, without categorie)
+exports.getItemsBasic = (req, res) => {
+  console.log("GET request for /api/items/basic");
+
+  db.query(
+    "SELECT item_id AS id, item_name AS name, category_id, item_price AS price FROM items",
+    (err, results) => {
+      if (err) {
+        console.error("Error retrieving items (basic):", err);
+        return res.status(500).json({ error: "Failed to retrieve items" });
+      }
+      console.log("Items (basic) retrieved:", results);
+      res.status(200).json(results);
+    }
+  );
 };
 
 // READ ONE
@@ -50,7 +72,10 @@ exports.getItemById = (req, res) => {
   const { id } = req.params;
 
   db.query(
-    "SELECT item_id AS id, item_name AS name, category_id, item_price AS price FROM items WHERE item_id = ?",
+    `SELECT i.item_id AS id, i.item_name AS name, i.category_id, m.categorie, i.item_price AS price 
+     FROM items i 
+     JOIN menu m ON i.category_id = m.id 
+     WHERE i.item_id = ?`,
     [parseInt(id)],
     (err, results) => {
       if (err) {
