@@ -1,0 +1,12 @@
+const express = require('express');
+const router = express.Router();
+const adminController = require('../controllers/adminController');
+
+// Admin management routes (protected by verifyToken)
+router.get('/', adminController.verifyToken, adminController.getAllAdmins);
+router.post('/', adminController.verifyToken, adminController.addAdmin);
+router.put('/:id', adminController.verifyToken, adminController.modifyAdmin);
+router.delete('/:id', adminController.verifyToken, adminController.removeAdmin);
+router.post('/admins/login', adminController.loginAdmin);
+
+module.exports = router;

@@ -1,0 +1,201 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const db = require('../databasemenu');
+require('dotenv').config();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+
+// Middleware to verify JWT token
+exports.verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Expecting "Bearer <token>"
+
+  console.log('Verifying token for request:', req.method, req.url); // Debug: Log the request
+  console.log('Token received:', token); // Debug: Log the token
+
+  if (!token) {
+    console.log('No token provided');
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('Token decoded:', decoded); // Debug: Log the decoded token
+    req.user = decoded;
+    next();
+  } catch (err) {
+    console.error('Token verification failed:', err);
+    return res.status(401).json({ error: 'Invalid token.' });
+  }
+};
+
+// Admin login
+exports.loginAdmin = async (req, res) => {
+  const { username, password } = req.body;
+
+  console.log('Login attempt with username:', username);
+
+  if (!username || !password) {
+    console.log('Missing username or password:', { username, password });
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  try {
+    db.query("SELECT * FROM admins WHERE username = ?", [username], async (err, results) => {
+      if (err) {
+        console.error('Error finding admin:', err);
+        return res.status(500).json({ error: 'Login failed' });
+      }
+
+      console.log('Database query results:', results);
+      
+      if (results.length === 0) {
+        console.log('No admin found for username:', username);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const admin = results[0];
+      console.log('Admin found:', { id: admin.id, username: admin.username, password: admin.password });
+
+      const passwordMatch = await bcrypt.compare(password, admin.password);
+      console.log('Password match result:', passwordMatch);
+      
+      if (!passwordMatch) {
+        console.log('Password does not match for username:', username);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: admin.id, username: admin.username },
+        JWT_SECRET,
+        { expiresIn: '24h' } // Extend expiration to 24 hours
+      );
+
+      // Login successful
+      console.log('Login successful for username:', username);
+      res.status(200).json({ 
+        message: 'Login successful',
+        token,
+        admin: {
+          id: admin.id,
+          username: admin.username
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'Unexpected error' });
+  }
+};
+
+// Get all admins
+exports.getAllAdmins = async (req, res) => {
+  try {
+    db.query("SELECT id, username FROM admins", (err, results) => {
+      if (err) {
+        console.error('Error fetching admins:', err);
+        return res.status(500).json({ error: 'Failed to fetch admins' });
+      }
+      res.status(200).json(results);
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'Unexpected error' });
+  }
+};
+
+// Add a new admin
+exports.addAdmin = async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    db.query(
+      "INSERT INTO admins (username, password) VALUES (?, ?)",
+      [username, hashedPassword],
+      (err, result) => {
+        if (err) {
+          console.error('Error adding admin:', err);
+          return res.status(500).json({ error: 'Failed to add admin' });
+        }
+        res.status(201).json({ message: `Admin '${username}' added successfully`, id: result.insertId });
+      }
+    );
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'Unexpected error' });
+  }
+};
+
+// Modify an admin
+exports.modifyAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { username, password } = req.body;
+
+  try {
+    db.query("SELECT * FROM admins WHERE id = ?", [id], async (err, results) => {
+      if (err) {
+        console.error('Error finding admin:', err);
+        return res.status(500).json({ error: 'Failed to find admin' });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Admin not found' });
+      }
+
+      const updates = {};
+      if (username) updates.username = username;
+      if (password) updates.password = await bcrypt.hash(password, 10);
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'No updates provided' });
+      }
+
+      db.query(
+        "UPDATE admins SET ? WHERE id = ?",
+        [updates, id],
+        (err, result) => {
+          if (err) {
+            console.error('Error updating admin:', err);
+            return res.status(500).json({ error: 'Failed to update admin' });
+          }
+          res.status(200).json({ message: `Admin ID ${id} updated successfully` });
+        }
+      );
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'Unexpected error' });
+  }
+};
+
+// Remove an admin
+exports.removeAdmin = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    db.query("SELECT * FROM admins WHERE id = ?", [id], (err, results) => {
+      if (err) {
+        console.error('Error finding admin:', err);
+        return res.status(500).json({ error: 'Failed to find admin' });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Admin not found' });
+      }
+
+      db.query("DELETE FROM admins WHERE id = ?", [id], (err, result) => {
+        if (err) {
+          console.error('Error removing admin:', err);
+          return res.status(500).json({ error: 'Failed to remove admin' });
+        }
+        res.status(200).json({ message: `Admin ID ${id} removed successfully` });
+      });
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'Unexpected error' });
+  }
+};

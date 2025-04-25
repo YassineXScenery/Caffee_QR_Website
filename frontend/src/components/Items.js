@@ -3,6 +3,7 @@ import axios from 'axios';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiDollarSign, FiTag } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
+const BASE_URL = API_URL.replace('/api', ''); // 'http://localhost:3000'
 
 function Items() {
   const [items, setItems] = useState([]);
@@ -10,6 +11,7 @@ function Items() {
   const [itemName, setItemName] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState('');
+  const [itemImage, setItemImage] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,10 +27,12 @@ function Items() {
     setError(null);
     try {
       const response = await axios.get(`${API_URL}/items`);
+      console.log('Items response:', response.data);
       setItems(response.data);
     } catch (error) {
       console.error('Error loading items:', error);
-      setError('Failed to load items');
+      setError(error.response?.data?.error || 'Failed to load items');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to load items');
     } finally {
       setIsLoading(false);
     }
@@ -37,48 +41,59 @@ function Items() {
   const loadCategories = async () => {
     try {
       const response = await axios.get(`${API_URL}/menu`);
+      console.log('Categories for items response:', response.data);
       setCategories(response.data);
       if (!response.data.some(cat => cat.id === parseInt(categoryId))) {
         setCategoryId('');
       }
     } catch (error) {
       console.error('Error loading categories:', error);
-      setError('Failed to load categories');
+      setError(error.response?.data?.error || 'Failed to load categories');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to load categories');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const parsedPrice = parseFloat(price);
-    
     if (!itemName.trim()) {
       setError('Please enter an item name');
+      console.log('Error set to: Please enter an item name');
       return;
     }
     if (!categoryId) {
       setError('Please select a category');
+      console.log('Error set to: Please select a category');
       return;
     }
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
       setError('Please enter a valid price');
+      console.log('Error set to: Please enter a valid price');
       return;
     }
 
     setIsLoading(true);
     setError(null);
+
     try {
+      const formData = new FormData();
+      formData.append('name', itemName);
+      formData.append('category_id', parseInt(categoryId));
+      formData.append('price', parsedPrice);
+      if (itemImage) {
+        formData.append('image', itemImage);
+      } else if (editingItem) {
+        formData.append('image', editingItem.image || '');
+      }
+
       if (editingItem) {
-        await axios.put(`${API_URL}/items/${editingItem.id}`, {
-          name: itemName,
-          category_id: parseInt(categoryId),
-          price: parsedPrice
+        await axios.put(`${API_URL}/items/${editingItem.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
         setSuccess('Item updated successfully!');
       } else {
-        await axios.post(`${API_URL}/items`, {
-          name: itemName,
-          category_id: parseInt(categoryId),
-          price: parsedPrice
+        await axios.post(`${API_URL}/items`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
         setSuccess('Item added successfully!');
       }
@@ -87,6 +102,7 @@ function Items() {
     } catch (error) {
       console.error('Error saving item:', error);
       setError(error.response?.data?.error || 'Failed to save item');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to save item');
     } finally {
       setIsLoading(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -107,6 +123,7 @@ function Items() {
     } catch (error) {
       console.error('Error deleting item:', error);
       setError(error.response?.data?.error || 'Failed to delete item');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to delete item');
     } finally {
       setIsLoading(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -118,13 +135,16 @@ function Items() {
     setItemName(item.name);
     setCategoryId(item.category_id.toString());
     setPrice(item.price.toString());
+    setItemImage(null);
   };
 
   const resetForm = () => {
     setItemName('');
     setCategoryId('');
     setPrice('');
+    setItemImage(null);
     setEditingItem(null);
+    setError(null);
   };
 
   return (
@@ -208,6 +228,27 @@ function Items() {
               </div>
             </div>
 
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Item Image (optional)</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png"
+                onChange={(e) => setItemImage(e.target.files[0])}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {editingItem && editingItem.image && !itemImage && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">Current image:</p>
+                  <img
+                    src={`${BASE_URL}${editingItem.image}?t=${new Date().getTime()}`}
+                    alt="Current item"
+                    className="mt-1 h-16 w-16 object-cover rounded-lg"
+                    onError={(e) => console.error(`Failed to load current image for editing: ${BASE_URL}${editingItem.image}`)}
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -216,7 +257,7 @@ function Items() {
               >
                 {isLoading ? (
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : editingItem ? (
@@ -252,7 +293,7 @@ function Items() {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700">{typeof error === 'string' ? error : 'An unexpected error occurred'}</p>
             </div>
           </div>
         </div>
@@ -294,11 +335,25 @@ function Items() {
             {items.map((item) => (
               <li key={item.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-lg font-medium text-gray-800">{item.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {item.categorie} • {item.price} DT
-                    </p>
+                  <div className="flex items-center space-x-4">
+                    {item.image ? (
+                      <img
+                        src={`${BASE_URL}${item.image}?t=${new Date().getTime()}`}
+                        alt={item.name}
+                        className="h-12 w-12 object-cover rounded-lg"
+                        onError={(e) => console.error(`Failed to load image for ${item.name}: ${BASE_URL}${item.image}`)}
+                      />
+                    ) : (
+                      <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">No Image</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-lg font-medium text-gray-800">{item.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {item.categorie} • {item.price} DT
+                      </p>
+                    </div>
                   </div>
                   <div className="flex space-x-2">
                     <button

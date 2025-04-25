@@ -1,42 +1,55 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan"); // Added Morgan
-const menuRoutes = require("./routes/menu");
-const itemRoutes = require("./routes/items");
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
+const adminController = require('./controllers/adminController');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
-// Middleware
+// Enable CORS for requests from the frontend
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: 'http://localhost:3001',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(morgan('dev')); // Added Morgan middleware for request logging
+
+// Middleware to parse JSON and form-data
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Ensure the uploads folder exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+  console.log('Created uploads directory at:', uploadsDir);
+}
+
+// Serve static files from the uploads folder with additional logging
+app.use('/uploads', (req, res, next) => {
+  console.log(`Requesting file: ${req.path} from directory: ${uploadsDir}`);
+  next();
+}, express.static(uploadsDir));
+console.log('Serving static files from:', uploadsDir);
 
 // Routes
-app.use("/api/menu", menuRoutes);
-app.use("/api/items", itemRoutes);
+app.use('/api/items', require('./routes/items'));
+app.use('/api/menu', require('./routes/menu'));
 
-// Test route
-app.get("/api/test", (req, res) => {
-  console.log("Test endpoint hit");
-  res.json({ message: "Server working!" });
-});
+// Define the login route separately without verifyToken
+app.post('/api/admins/login', adminController.loginAdmin);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Server error:", err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
-});
+// Apply verifyToken middleware to other admin routes
+app.use('/api/admins', adminController.verifyToken, adminRoutes);
 
-// Handle 404
+// Fallback for 404 errors
 app.use((req, res) => {
-  res.status(404).json({ error: "Not found" });
+  console.log(`404 Not Found: ${req.method} ${req.url}`);
+  res.status(404).send('Not Found');
 });
 
-const PORT = 3000; // Changed from 5000
+// Start the server
+const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

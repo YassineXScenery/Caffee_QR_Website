@@ -3,10 +3,12 @@ import axios from 'axios';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
+const BASE_URL = API_URL.replace('/api', ''); // 'http://localhost:3000'
 
 function Categories() {
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState('');
+  const [categoryImage, setCategoryImage] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,10 +23,12 @@ function Categories() {
     setError(null);
     try {
       const response = await axios.get(`${API_URL}/menu`);
+      console.log('Categories response:', response.data);
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
-      setError('Failed to load categories');
+      setError(error.response?.data?.error || 'Failed to load categories');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to load categories');
     } finally {
       setIsLoading(false);
     }
@@ -34,25 +38,40 @@ function Categories() {
     e.preventDefault();
     if (!categoryName.trim()) {
       setError('Please enter a category name');
+      console.log('Error set to: Please enter a category name');
       return;
     }
 
     setIsLoading(true);
     setError(null);
     try {
+      const formData = new FormData();
+      formData.append('categorie', categoryName);
+      if (categoryImage) {
+        formData.append('image', categoryImage);
+      } else if (editingCategory) {
+        formData.append('image', editingCategory.image || '');
+      }
+
       if (editingCategory) {
-        await axios.put(`${API_URL}/menu/${editingCategory.id}`, { categorie: categoryName });
+        await axios.put(`${API_URL}/menu/${editingCategory.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         setSuccess('Category updated successfully!');
       } else {
-        await axios.post(`${API_URL}/menu`, { categorie: categoryName });
+        await axios.post(`${API_URL}/menu`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         setSuccess('Category added successfully!');
       }
       setCategoryName('');
+      setCategoryImage(null);
       setEditingCategory(null);
       loadCategories();
     } catch (error) {
       console.error('Error saving category:', error);
       setError(error.response?.data?.error || 'Failed to save category');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to save category');
     } finally {
       setIsLoading(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -73,6 +92,7 @@ function Categories() {
     } catch (error) {
       console.error('Error deleting category:', error);
       setError(error.response?.data?.error || 'Failed to delete category');
+      console.log('Error set to:', error.response?.data?.error || 'Failed to delete category');
     } finally {
       setIsLoading(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -82,11 +102,13 @@ function Categories() {
   const startEditing = (category) => {
     setEditingCategory(category);
     setCategoryName(category.categorie);
+    setCategoryImage(null);
   };
 
   const cancelEditing = () => {
     setEditingCategory(null);
     setCategoryName('');
+    setCategoryImage(null);
     setError(null);
   };
 
@@ -110,15 +132,38 @@ function Categories() {
           </h2>
           
           <form onSubmit={handleSubmit}>
-            <div className="flex gap-2">
+            <div className="mb-4">
               <input
                 type="text"
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
                 placeholder="Enter category name"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
-              
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category Image (optional)</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png"
+                onChange={(e) => setCategoryImage(e.target.files[0])}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {editingCategory && editingCategory.image && !categoryImage && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">Current image:</p>
+                  <img
+                    src={`${BASE_URL}${editingCategory.image}`}
+                    alt="Current category"
+                    className="mt-1 h-16 w-16 object-cover rounded-lg"
+                    onError={(e) => console.error(`Failed to load current image for editing: ${BASE_URL}${editingCategory.image}`)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={isLoading}
@@ -126,7 +171,7 @@ function Categories() {
               >
                 {isLoading ? (
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : editingCategory ? (
@@ -162,7 +207,7 @@ function Categories() {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700">{typeof error === 'string' ? error : 'An unexpected error occurred'}</p>
             </div>
           </div>
         </div>
@@ -204,7 +249,21 @@ function Categories() {
             {categories.map((category) => (
               <li key={category.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center">
+                  <div className="flex items-center space-x-4">
+                    {category.image ? (
+                      <>
+                        <img
+                          src={`${BASE_URL}${category.image}`}
+                          alt={category.categorie}
+                          className="h-12 w-12 object-cover rounded-lg"
+                          onError={(e) => console.error(`Failed to load image for ${category.categorie}: ${BASE_URL}${category.image}`)}
+                        />
+                      </>
+                    ) : (
+                      <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">No Image</span>
+                      </div>
+                    )}
                     <span className="text-lg font-medium text-gray-800">{category.categorie}</span>
                   </div>
                   <div className="flex space-x-2">
