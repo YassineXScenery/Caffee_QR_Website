@@ -1,14 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
 
 const API_URL = 'http://localhost:3000/api';
 
 function Login() {
+  let navigate = useNavigate();
+  useEffect(()=>{
+
+    if(localStorage.getItem('token')){
+      navigate('/manage')
+    }
+  },[])
+
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

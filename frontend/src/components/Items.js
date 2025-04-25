@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiDollarSign, FiTag } from 'react-icons/fi';
 
@@ -17,12 +17,7 @@ function Items() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  useEffect(() => {
-    loadItems();
-    loadCategories();
-  }, []);
-
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -36,9 +31,9 @@ function Items() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/menu`);
       console.log('Categories for items response:', response.data);
@@ -51,7 +46,12 @@ function Items() {
       setError(error.response?.data?.error || 'Failed to load categories');
       console.log('Error set to:', error.response?.data?.error || 'Failed to load categories');
     }
-  };
+  }, [categoryId]);
+
+  useEffect(() => {
+    loadItems();
+    loadCategories();
+  }, [loadItems, loadCategories]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -381,4 +381,4 @@ function Items() {
   );
 }
 
-export default Items;
+export default Items; 

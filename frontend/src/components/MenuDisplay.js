@@ -197,8 +197,8 @@ function MenuDisplay() {
                         <div className="p-4">
                           <h3 className="text-lg font-medium text-gray-900 mb-1">{item.name.toLowerCase()}</h3>
                           <div className="flex items-center text-gray-700">
+                          <span className="font-medium">{item.price.toFixed(2)}</span>
                             <span className="mr-1 text-gray-500 font-medium">DT</span>
-                            <span className="font-medium">{item.price.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
