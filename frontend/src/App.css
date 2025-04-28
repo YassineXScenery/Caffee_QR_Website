@@ -1,3 +1,35 @@
 body {
   background-color: #f4f4f4;
 }
+/* Fade and slide transition for entering/leaving the MenuDisplay */
+.fade-slide-enter {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.fade-slide-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+}
+
+.fade-slide-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-slide-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+}
+
+/* Ensure the menu-display wrapper takes full space for the animation */
+.menu-display {
+  width: 100%;
+}
+
+/* Ensure the route container takes full space */
+.route-container {
+  width: 100%;
+}

@@ -1,9 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import Login from './components/Login';
-import Items from './components/Items';
-import Categories from './components/Categories';
 import MenuDisplay from './components/MenuDisplay';
-import Admins from './components/Admins'; // Import Admins component
+import Admins from './components/Admins';
 
 function App() {
   const ProtectedRoute = ({ children }) => {
@@ -65,9 +63,7 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <Admins /> {/* Add Admins component */}
-                  <Categories />
-                  <Items />
+                  <Admins />
                 </div>
               </ProtectedRoute>
             }

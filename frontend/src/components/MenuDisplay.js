@@ -120,21 +120,14 @@ function MenuDisplay() {
       {!isLoading && Object.keys(menu).length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.entries(menu).map(([category, items]) => (
-            <div
-              key={category}
-              className="bg-white rounded-2xl shadow-lg"
-              style={{
-                height: categoryStates[category] ? 'auto' : 'fit-content',
-                overflow: 'hidden'
-              }}
-            >
+            <div key={category}>
               {/* Category Header with Image */}
               <button
                 onClick={() => toggleCategory(category)}
-                className={`w-full flex items-center p-6 text-left transition-colors duration-300
+                className={`w-full flex items-center p-6 text-left transition-colors duration-300 rounded-t-2xl
                   ${categoryStates[category] ? 
-                    'bg-blue-700 text-white' : 
-                    'bg-blue-600 text-white hover:bg-blue-500'}`}
+                    'bg-blue-700 text-white rounded-b-none' : 
+                    'bg-blue-600 text-white hover:bg-blue-500 rounded-b-2xl'}`}
               >
                 {/* Category Image */}
                 {categoryImages[category] ? (
@@ -164,8 +157,13 @@ function MenuDisplay() {
                 </div>
               </button>
 
-              {/* Items Grid - Only render if category is open */}
-              {categoryStates[category] && (
+              {/* Items Container with Slide Animation */}
+              <div
+                className="transition-all duration-500 ease-in-out overflow-hidden bg-white rounded-b-2xl shadow-lg"
+                style={{
+                  maxHeight: categoryStates[category] ? '1000px' : '0px', // Large max-height to accommodate content
+                }}
+              >
                 <div className="p-6 pt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {items.map((item) => (
@@ -197,7 +195,7 @@ function MenuDisplay() {
                         <div className="p-4">
                           <h3 className="text-lg font-medium text-gray-900 mb-1">{item.name.toLowerCase()}</h3>
                           <div className="flex items-center text-gray-700">
-                          <span className="font-medium">{item.price.toFixed(2)}</span>
+                            <span className="font-medium">{item.price.toFixed(2)}</span>
                             <span className="mr-1 text-gray-500 font-medium">DT</span>
                           </div>
                         </div>
@@ -205,7 +203,7 @@ function MenuDisplay() {
                     ))}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
