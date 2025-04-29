@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Ensure the uploads folder exists
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = path.join(__dirname, 'Uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
   console.log('Created uploads directory at:', uploadsDir);
@@ -35,6 +35,7 @@ console.log('Serving static files from:', uploadsDir);
 // Routes
 app.use('/api/items', require('./routes/items'));
 app.use('/api/menu', require('./routes/menu'));
+app.use('/api/feedback', require('./routes/feedback')); // Ensure this is present
 
 // Define the login route separately without verifyToken
 app.post('/api/admins/login', adminController.loginAdmin);

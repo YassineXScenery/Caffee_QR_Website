@@ -6,10 +6,15 @@ const API_URL = 'http://localhost:3000/api';
 
 function MenuDisplay() {
   const [menu, setMenu] = useState({});
-  const [categoryImages, setCategoryImages] = useState({}); // New state for category images
+  const [categoryImages, setCategoryImages] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [categoryStates, setCategoryStates] = useState({});
+  // Feedback state
+  const [feedback, setFeedback] = useState('');
+  const [feedbackError, setFeedbackError] = useState(null);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -18,12 +23,11 @@ function MenuDisplay() {
       try {
         const [categoriesResponse, itemsResponse] = await Promise.all([
           axios.get(`${API_URL}/menu`, { headers: { Authorization: undefined } }),
-          axios.get(`${API_URL}/items`, { headers: { Authorization: undefined } })
+          axios.get(`${API_URL}/items`, { headers: { Authorization: undefined } }),
         ]);
 
-        // Map category images
         const categoryImageMap = categoriesResponse.data.reduce((acc, category) => {
-          acc[category.categorie] = category.image || null; // Store image for each category
+          acc[category.categorie] = category.image || null;
           return acc;
         }, {});
 
@@ -54,19 +58,39 @@ function MenuDisplay() {
   }, []);
 
   const toggleCategory = (category) => {
-    console.log(`Before toggle - Category: ${category}, Current states:`, categoryStates);
     setCategoryStates(prev => {
       const newStates = { ...prev };
       Object.keys(newStates).forEach(key => {
         newStates[key] = key === category ? !newStates[key] : false;
       });
-      console.log(`After toggle - Category: ${category}, New states:`, newStates);
       return newStates;
     });
   };
 
-  console.log('Rendering MenuDisplay with categoryStates:', categoryStates);
-  console.log('Category images:', categoryImages);
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    if (!feedback.trim()) {
+      setFeedbackError('Please enter your feedback');
+      return;
+    }
+
+    setFeedbackError(null);
+    setFeedbackSuccess(null);
+    setIsSubmitting(true);
+
+    try {
+      await axios.post(`${API_URL}/feedback`, { message: feedback });
+      setFeedbackSuccess('Thank you for your feedback!');
+      setFeedback('');
+      setTimeout(() => setFeedbackSuccess(null), 3000);
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+      setFeedbackError(err.response?.data?.error || 'Failed to submit feedback');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -78,7 +102,7 @@ function MenuDisplay() {
         </p>
       </div>
 
-      {/* Loading State */}
+      {/* Menu Display */}
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
@@ -93,7 +117,6 @@ function MenuDisplay() {
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div className="max-w-2xl mx-auto bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-8">
           <div className="flex items-center">
@@ -105,7 +128,6 @@ function MenuDisplay() {
         </div>
       )}
 
-      {/* Empty State */}
       {!isLoading && Object.keys(menu).length === 0 && !error && (
         <div className="max-w-md mx-auto bg-white rounded-2xl shadow-md p-8 text-center">
           <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,12 +138,10 @@ function MenuDisplay() {
         </div>
       )}
 
-      {/* Menu Categories */}
       {!isLoading && Object.keys(menu).length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.entries(menu).map(([category, items]) => (
             <div key={category}>
-              {/* Category Header with Image */}
               <button
                 onClick={() => toggleCategory(category)}
                 className={`w-full flex items-center p-6 text-left transition-colors duration-300 rounded-t-2xl
@@ -129,14 +149,12 @@ function MenuDisplay() {
                     'bg-blue-700 text-white rounded-b-none' : 
                     'bg-blue-600 text-white hover:bg-blue-500 rounded-b-2xl'}`}
               >
-                {/* Category Image */}
                 {categoryImages[category] ? (
                   <img
                     src={`http://localhost:3000${categoryImages[category]}`}
                     alt={category}
                     className="w-20 h-20 object-cover rounded-full mr-4"
                     onError={(e) => {
-                      console.error('Category image failed to load:', categoryImages[category], e);
                       e.target.onerror = null;
                       e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2248%22%20height%3D%2248%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210%22%20y%3D%2226%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
                     }}
@@ -146,7 +164,6 @@ function MenuDisplay() {
                     <span className="text-gray-500 text-sm">No Image</span>
                   </div>
                 )}
-                {/* Category Name and Chevron */}
                 <div className="flex-1 flex justify-between items-center">
                   <h2 className="text-2xl font-bold">{category}</h2>
                   {categoryStates[category] ? (
@@ -156,12 +173,10 @@ function MenuDisplay() {
                   )}
                 </div>
               </button>
-
-              {/* Items Container with Slide Animation */}
               <div
                 className="transition-all duration-500 ease-in-out overflow-hidden bg-white rounded-b-2xl shadow-lg"
                 style={{
-                  maxHeight: categoryStates[category] ? '1000px' : '0px', // Large max-height to accommodate content
+                  maxHeight: categoryStates[category] ? '1000px' : '0px',
                 }}
               >
                 <div className="p-6 pt-4">
@@ -171,7 +186,6 @@ function MenuDisplay() {
                         key={item.id}
                         className="bg-white rounded-lg shadow-md overflow-hidden"
                       >
-                        {/* Item Image */}
                         <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                           {item.image ? (
                             <img
@@ -179,7 +193,6 @@ function MenuDisplay() {
                               alt={item.name}
                               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                               onError={(e) => {
-                                console.error('Item image failed to load:', item.image, e);
                                 e.target.onerror = null;
                                 e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22110.5%22%20y%3D%22107.1%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
                               }}
@@ -190,8 +203,6 @@ function MenuDisplay() {
                             </div>
                           )}
                         </div>
-
-                        {/* Item Details */}
                         <div className="p-4">
                           <h3 className="text-lg font-medium text-gray-900 mb-1">{item.name.toLowerCase()}</h3>
                           <div className="flex items-center text-gray-700">
@@ -208,6 +219,43 @@ function MenuDisplay() {
           ))}
         </div>
       )}
+
+      {/* Feedback Form - Moved to Bottom */}
+      <div className="mt-12 bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">We Value Your Feedback</h2>
+        <form onSubmit={handleFeedbackSubmit}>
+          <div className="mb-4">
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Share your thoughts or suggestions..."
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              rows="4"
+              maxLength="500"
+              disabled={isSubmitting}
+            />
+          </div>
+          {feedbackError && (
+            <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+              <p className="text-sm text-red-700">{feedbackError}</p>
+            </div>
+          )}
+          {feedbackSuccess && (
+            <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+              <p className="text-sm text-green-600">{feedbackSuccess}</p>
+            </div>
+          )}
+          <button
+            type="submit"
+            className={`px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+              isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiUser, FiDollarSign, FiTag } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiUser, FiDollarSign, FiTag, FiMessageSquare } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
-const BASE_URL = API_URL.replace('/api', ''); // 'http://localhost:3000'
+const BASE_URL = API_URL.replace('/api', '');
 
 function Admins() {
-  // State for Admins Section
   const [admins, setAdmins] = useState([]);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +14,6 @@ function Admins() {
   const [errorAdmins, setErrorAdmins] = useState(null);
   const [successAdmins, setSuccessAdmins] = useState(null);
 
-  // State for Items Section
   const [items, setItems] = useState([]);
   const [categoriesForItems, setCategoriesForItems] = useState([]);
   const [itemName, setItemName] = useState('');
@@ -27,7 +25,6 @@ function Admins() {
   const [errorItems, setErrorItems] = useState(null);
   const [successItems, setSuccessItems] = useState(null);
 
-  // State for Categories Section
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState('');
   const [categoryImage, setCategoryImage] = useState(null);
@@ -36,42 +33,157 @@ function Admins() {
   const [errorCategories, setErrorCategories] = useState(null);
   const [successCategories, setSuccessCategories] = useState(null);
 
-  // Load Admins
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [isLoadingFeedbacks, setIsLoadingFeedbacks] = useState(false);
+  const [errorFeedbacks, setErrorFeedbacks] = useState(null);
+
+  const loadFeedbacks = useCallback(async () => {
+    setIsLoadingFeedbacks(true);
+    setErrorFeedbacks(null);
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/feedback`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFeedbacks(response.data);
+    } catch (error) {
+      console.error('Error loading feedbacks:', error);
+      setErrorFeedbacks(error.response?.data?.error || 'Failed to load feedbacks');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    } finally {
+      setIsLoadingFeedbacks(false);
+    }
+  }, []);
+
+  const deleteFeedback = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this feedback?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/feedback/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFeedbacks(feedbacks.filter(feedback => feedback.id !== id));
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      setErrorFeedbacks(error.response?.data?.error || 'Failed to delete feedback');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    }
+  };
+
+  const deleteAllFeedbacks = async () => {
+    if (!window.confirm('Are you sure you want to delete all feedbacks? This action cannot be undone.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/feedback`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFeedbacks([]);
+    } catch (error) {
+      console.error('Error deleting all feedbacks:', error);
+      setErrorFeedbacks(error.response?.data?.error || 'Failed to delete all feedbacks');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    }
+  };
+
   const loadAdmins = useCallback(async () => {
     setIsLoadingAdmins(true);
     setErrorAdmins(null);
 
     const token = localStorage.getItem('token');
-    console.log('Token in Admins.js (loadAdmins):', token);
-
     if (!token) {
-      console.log('No token found, redirecting to /login');
       window.location.href = '/login';
       return;
     }
 
     const api = axios.create({
       baseURL: API_URL,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
     try {
       const response = await api.get('/admins');
-      console.log('GET /api/admins response:', response.data);
       setAdmins(response.data);
     } catch (error) {
       console.error('Error loading admins:', error);
-      console.log('Error response:', error.response?.data);
       setErrorAdmins(error.response?.data?.error || 'Failed to load admins');
       if (error.response?.status === 401 || error.response?.status === 403) {
-        console.log('Unauthorized or Forbidden, redirecting to /login');
         localStorage.removeItem('token');
         window.location.href = '/login';
       }
     } finally {
       setIsLoadingAdmins(false);
+    }
+  }, []);
+
+  const loadItems = useCallback(async () => {
+    setIsLoadingItems(true);
+    setErrorItems(null);
+    try {
+      const response = await axios.get(`${API_URL}/items`);
+      setItems(response.data);
+    } catch (error) {
+      console.error('Error loading items:', error);
+      setErrorItems(error.response?.data?.error || 'Failed to load items');
+    } finally {
+      setIsLoadingItems(false);
+    }
+  }, []);
+
+  const loadCategoriesForItems = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/menu`);
+      setCategoriesForItems(response.data);
+      if (!response.data.some(cat => cat.id === parseInt(categoryId))) {
+        setCategoryId('');
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      setErrorItems(error.response?.data?.error || 'Failed to load categories');
+    }
+  }, [categoryId]);
+
+  const loadCategories = useCallback(async () => {
+    setIsLoadingCategories(true);
+    setErrorCategories(null);
+    try {
+      const response = await axios.get(`${API_URL}/menu`);
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      setErrorCategories(error.response?.data?.error || 'Failed to load categories');
+    } finally {
+      setIsLoadingCategories(false);
     }
   }, []);
 
@@ -92,9 +204,7 @@ function Admins() {
     const token = localStorage.getItem('token');
     const api = axios.create({
       baseURL: API_URL,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
     try {
@@ -134,9 +244,7 @@ function Admins() {
     const token = localStorage.getItem('token');
     const api = axios.create({
       baseURL: API_URL,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
     try {
@@ -168,36 +276,6 @@ function Admins() {
     setEditingAdmin(null);
     setErrorAdmins(null);
   };
-
-  // Load Items
-  const loadItems = useCallback(async () => {
-    setIsLoadingItems(true);
-    setErrorItems(null);
-    try {
-      const response = await axios.get(`${API_URL}/items`);
-      console.log('Items response:', response.data);
-      setItems(response.data);
-    } catch (error) {
-      console.error('Error loading items:', error);
-      setErrorItems(error.response?.data?.error || 'Failed to load items');
-    } finally {
-      setIsLoadingItems(false);
-    }
-  }, []);
-
-  const loadCategoriesForItems = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API_URL}/menu`);
-      console.log('Categories for items response:', response.data);
-      setCategoriesForItems(response.data);
-      if (!response.data.some(cat => cat.id === parseInt(categoryId))) {
-        setCategoryId('');
-      }
-    } catch (error) {
-      console.error('Error loading categories:', error);
-      setErrorItems(error.response?.data?.error || 'Failed to load categories');
-    }
-  }, [categoryId]);
 
   const handleSubmitItem = async (e) => {
     e.preventDefault();
@@ -288,22 +366,6 @@ function Admins() {
     setErrorItems(null);
   };
 
-  // Load Categories
-  const loadCategories = useCallback(async () => {
-    setIsLoadingCategories(true);
-    setErrorCategories(null);
-    try {
-      const response = await axios.get(`${API_URL}/menu`);
-      console.log('Categories response:', response.data);
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Error loading categories:', error);
-      setErrorCategories(error.response?.data?.error || 'Failed to load categories');
-    } finally {
-      setIsLoadingCategories(false);
-    }
-  }, []);
-
   const handleSubmitCategory = async (e) => {
     e.preventDefault();
     if (!categoryName.trim()) {
@@ -337,8 +399,8 @@ function Admins() {
       setCategoryImage(null);
       setEditingCategory(null);
       loadCategories();
-      loadCategoriesForItems(); // Update categories for items as well
-      loadItems(); // Reload items as they may be affected by category deletion
+      loadCategoriesForItems();
+      loadItems();
     } catch (error) {
       console.error('Error saving category:', error);
       setErrorCategories(error.response?.data?.error || 'Failed to save category');
@@ -359,8 +421,8 @@ function Admins() {
       await axios.delete(`${API_URL}/menu/${id}`);
       setSuccessCategories('Category deleted successfully!');
       loadCategories();
-      loadCategoriesForItems(); // Update categories for items as well
-      loadItems(); // Reload items as they may be affected by category deletion
+      loadCategoriesForItems();
+      loadItems();
     } catch (error) {
       console.error('Error deleting category:', error);
       setErrorCategories(error.response?.data?.error || 'Failed to delete category');
@@ -383,7 +445,6 @@ function Admins() {
     setErrorCategories(null);
   };
 
-  // Smooth scrolling function
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -392,16 +453,15 @@ function Admins() {
   };
 
   useEffect(() => {
-    console.log('Admins.js mounted, checking token...');
     loadAdmins();
     loadItems();
     loadCategories();
     loadCategoriesForItems();
-  }, [loadAdmins, loadItems, loadCategories, loadCategoriesForItems]);
+    loadFeedbacks();
+  }, [loadAdmins, loadItems, loadCategories, loadCategoriesForItems, loadFeedbacks]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      {/* Header */}
       <div className="flex items-center justify-between mb-12">
         <h1 className="text-4xl font-semibold text-gray-900">
           Manage Cafe Menu
@@ -425,10 +485,15 @@ function Admins() {
           >
             Manage Categories
           </button>
+          <button
+            onClick={() => scrollToSection('feedback-section')}
+            className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors text-sm font-medium"
+          >
+            View Feedback
+          </button>
         </div>
       </div>
 
-      {/* Admins Section */}
       <div id="admins-section" className="mb-16">
         <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
           Manage Admins
@@ -436,14 +501,11 @@ function Admins() {
             {admins.length} {admins.length === 1 ? 'admin' : 'admins'}
           </span>
         </h1>
-
-        {/* Admins Form Card */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
           <div className="p-6">
             <h2 className="text-lg font-medium text-gray-800 mb-4">
               {editingAdmin ? 'Edit Admin' : 'Add New Admin'}
             </h2>
-            
             <form onSubmit={handleSubmitAdmin}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -464,7 +526,6 @@ function Admins() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">
                     Password {editingAdmin ? '(optional)' : ''}
@@ -479,7 +540,6 @@ function Admins() {
                   />
                 </div>
               </div>
-
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -498,7 +558,6 @@ function Admins() {
                   )}
                   {isLoadingAdmins ? 'Processing...' : editingAdmin ? 'Update Admin' : 'Add Admin'}
                 </button>
-                
                 {editingAdmin && (
                   <button
                     type="button"
@@ -513,8 +572,6 @@ function Admins() {
             </form>
           </div>
         </div>
-
-        {/* Admins Status Messages */}
         {errorAdmins && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div className="flex">
@@ -529,7 +586,6 @@ function Admins() {
             </div>
           </div>
         )}
-
         {successAdmins && (
           <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
             <div className="flex">
@@ -544,8 +600,6 @@ function Admins() {
             </div>
           </div>
         )}
-
-        {/* Admins List */}
         {isLoadingAdmins && admins.length === 0 ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-pulse flex space-x-4">
@@ -599,7 +653,6 @@ function Admins() {
         )}
       </div>
 
-      {/* Items Section */}
       <div id="items-section" className="mb-16">
         <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
           Menu Items
@@ -607,14 +660,11 @@ function Admins() {
             {items.length} {items.length === 1 ? 'item' : 'items'}
           </span>
         </h1>
-
-        {/* Items Form Card */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
           <div className="p-6">
             <h2 className="text-lg font-medium text-gray-800 mb-4">
               {editingItem ? 'Edit Item' : 'Add New Item'}
             </h2>
-            
             <form onSubmit={handleSubmitItem}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
@@ -635,7 +685,6 @@ function Admins() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label htmlFor="category" className="block text-sm font-medium text-gray-600 mb-1">
                     Category
@@ -654,7 +703,6 @@ function Admins() {
                     ))}
                   </select>
                 </div>
-
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-600 mb-1">
                     Price (DT)
@@ -676,7 +724,6 @@ function Admins() {
                   </div>
                 </div>
               </div>
-
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Item Image (optional)</label>
                 <input
@@ -697,7 +744,6 @@ function Admins() {
                   </div>
                 )}
               </div>
-
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -716,7 +762,6 @@ function Admins() {
                   )}
                   {isLoadingItems ? 'Processing...' : editingItem ? 'Update Item' : 'Add Item'}
                 </button>
-                
                 {editingItem && (
                   <button
                     type="button"
@@ -731,8 +776,6 @@ function Admins() {
             </form>
           </div>
         </div>
-
-        {/* Items Status Messages */}
         {errorItems && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div className="flex">
@@ -747,7 +790,6 @@ function Admins() {
             </div>
           </div>
         )}
-
         {successItems && (
           <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
             <div className="flex">
@@ -762,8 +804,6 @@ function Admins() {
             </div>
           </div>
         )}
-
-        {/* Items List */}
         {isLoadingItems && items.length === 0 ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-pulse flex space-x-4">
@@ -828,7 +868,6 @@ function Admins() {
         )}
       </div>
 
-      {/* Categories Section */}
       <div id="categories-section" className="mb-16">
         <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
           Menu Categories
@@ -836,14 +875,11 @@ function Admins() {
             {categories.length} {categories.length === 1 ? 'category' : 'categories'}
           </span>
         </h1>
-
-        {/* Categories Form Card */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
           <div className="p-6">
             <h2 className="text-lg font-medium text-gray-800 mb-4">
               {editingCategory ? 'Edit Category' : 'Add New Category'}
             </h2>
-            
             <form onSubmit={handleSubmitCategory}>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Category Name</label>
@@ -855,7 +891,6 @@ function Admins() {
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
-
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Category Image (optional)</label>
                 <input
@@ -876,7 +911,6 @@ function Admins() {
                   </div>
                 )}
               </div>
-
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -895,7 +929,6 @@ function Admins() {
                   )}
                   {isLoadingCategories ? 'Processing...' : editingCategory ? 'Update Category' : 'Add Category'}
                 </button>
-                
                 {editingCategory && (
                   <button
                     type="button"
@@ -910,8 +943,6 @@ function Admins() {
             </form>
           </div>
         </div>
-
-        {/* Categories Status Messages */}
         {errorCategories && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div className="flex">
@@ -926,7 +957,6 @@ function Admins() {
             </div>
           </div>
         )}
-
         {successCategories && (
           <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
             <div className="flex">
@@ -941,8 +971,6 @@ function Admins() {
             </div>
           </div>
         )}
-
-        {/* Categories List */}
         {isLoadingCategories && categories.length === 0 ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-pulse flex space-x-4">
@@ -993,6 +1021,88 @@ function Admins() {
                         onClick={() => deleteCategory(category.id)}
                         className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                         title="Delete"
+                      >
+                        <FiTrash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div id="feedback-section" className="mb-16">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+          Customer Feedback
+          <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+            {feedbacks.length} {feedbacks.length === 1 ? 'feedback' : 'feedbacks'}
+          </span>
+          {feedbacks.length > 0 && (
+            <div className="ml-4 relative group">
+              <button
+                onClick={deleteAllFeedbacks}
+                className="p-3 bg-red-600 text-white rounded-lg border border-red-700 shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all"
+              >
+                <FiTrash2 className="h-6 w-6" />
+              </button>
+              <span className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 hidden group-hover:block px-3 py-1 text-sm text-white bg-gray-800 rounded-lg shadow-lg whitespace-nowrap">
+                Delete All Feedbacks
+              </span>
+            </div>
+          )}
+        </h1>
+        {errorFeedbacks && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-600">{errorFeedbacks}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {isLoadingFeedbacks && feedbacks.length === 0 ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-pulse flex space-x-4">
+              <div className="rounded-full bg-gray-200 h-12 w-12"></div>
+            </div>
+          </div>
+        ) : feedbacks.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">No feedback yet</h3>
+            <p className="mt-1 text-sm text-gray-500">Customer feedback will appear here once submitted.</p>
+          </div>
+        ) : (
+          <div className="bg-white shadow-sm rounded-xl border border-gray-100">
+            <ul className="divide-y divide-gray-100">
+              {feedbacks.map((feedback) => (
+                <li key={feedback.id} className="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4">
+                      <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <FiMessageSquare className="h-6 w-6 text-gray-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-base text-gray-800">{feedback.message}</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Submitted on {new Date(feedback.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => deleteFeedback(feedback.id)}
+                        className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                        title="Delete Feedback"
                       >
                         <FiTrash2 className="h-5 w-5" />
                       </button>
