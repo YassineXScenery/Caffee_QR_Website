@@ -68,6 +68,36 @@ function MenuDisplay() {
 
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+
+    // Check for existing cooldown
+    const cooldownEndTime = localStorage.getItem('callWaiterCooldownEnd');
+    if (cooldownEndTime) {
+      const endTime = parseInt(cooldownEndTime, 10);
+      const currentTime = Date.now();
+      const remainingTime = Math.max(0, Math.ceil((endTime - currentTime) / 1000));
+
+      if (remainingTime > 0) {
+        setIsCallWaiterDisabled(true);
+        setCooldownTime(remainingTime);
+
+        const interval = setInterval(() => {
+          setCooldownTime(prev => {
+            const newTime = prev - 1;
+            if (newTime <= 0) {
+              clearInterval(interval);
+              setIsCallWaiterDisabled(false);
+              localStorage.removeItem('callWaiterCooldownEnd');
+              return 0;
+            }
+            return newTime;
+          });
+        }, 1000);
+
+        return () => clearInterval(interval);
+      } else {
+        localStorage.removeItem('callWaiterCooldownEnd');
+      }
+    }
   }, []);
 
   const toggleCategory = (category) => {
@@ -127,14 +157,21 @@ function MenuDisplay() {
       setTableNumber('');
       setIsCallWaiterDisabled(true);
       setCooldownTime(60);
+
+      // Save cooldown end time to localStorage
+      const cooldownEndTime = Date.now() + 60 * 1000;
+      localStorage.setItem('callWaiterCooldownEnd', cooldownEndTime.toString());
+
       const interval = setInterval(() => {
         setCooldownTime(prev => {
-          if (prev <= 1) {
+          const newTime = prev - 1;
+          if (newTime <= 0) {
             clearInterval(interval);
             setIsCallWaiterDisabled(false);
+            localStorage.removeItem('callWaiterCooldownEnd');
             return 0;
           }
-          return prev - 1;
+          return newTime;
         });
       }, 1000);
       setTimeout(() => setCallWaiterSuccess(null), 3000);

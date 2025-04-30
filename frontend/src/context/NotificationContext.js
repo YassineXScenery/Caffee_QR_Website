@@ -18,9 +18,9 @@ const NotificationProvider = ({ children }) => {
       if (storedNotifications) {
         const parsedNotifications = JSON.parse(storedNotifications);
         const now = Date.now();
-        const validNotifications = parsedNotifications.filter(
-          (notification) => now - notification.timestamp < 24 * 60 * 60 * 1000
-        );
+        const validNotifications = parsedNotifications
+          .filter((notification) => now - notification.timestamp < 24 * 60 * 60 * 1000)
+          .sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp descending
         setNotifications(validNotifications);
         const unread = validNotifications.filter((n) => !n.read).length;
         setUnreadCount(unread);
@@ -32,6 +32,7 @@ const NotificationProvider = ({ children }) => {
 
     // Socket event handlers
     const handleWaiterCalled = (data) => {
+      console.log('Received waiterCalled event:', data);
       const newNotification = {
         id: Date.now(),
         message: `Waiter called from table ${data.tableNumber}`,
@@ -39,14 +40,19 @@ const NotificationProvider = ({ children }) => {
         read: false,
       };
       setNotifications((prev) => {
-        const updatedNotifications = [...prev, newNotification];
+        const updatedNotifications = [newNotification, ...prev];
         localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
         return updatedNotifications;
       });
       setUnreadCount((prev) => prev + 1);
     };
 
-    const handleFeedbackSubmitted = (data) => {
+    const handleNewFeedback = (data) => {
+      console.log('Received newFeedback event:', data);
+      if (!data || !data.message) {
+        console.error('Invalid feedback data received:', data);
+        return;
+      }
       const newNotification = {
         id: Date.now(),
         message: `New feedback submitted: ${data.message.substring(0, 50)}${data.message.length > 50 ? '...' : ''}`,
@@ -54,7 +60,7 @@ const NotificationProvider = ({ children }) => {
         read: false,
       };
       setNotifications((prev) => {
-        const updatedNotifications = [...prev, newNotification];
+        const updatedNotifications = [newNotification, ...prev];
         localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
         return updatedNotifications;
       });
@@ -62,13 +68,21 @@ const NotificationProvider = ({ children }) => {
     };
 
     // Set up socket event listeners
+    socket.on('connect', () => {
+      console.log('Socket.IO connected:', socket.id);
+    });
     socket.on('waiterCalled', handleWaiterCalled);
-    socket.on('feedbackSubmitted', handleFeedbackSubmitted);
+    socket.on('newFeedback', handleNewFeedback);
+    socket.on('disconnect', () => {
+      console.log('Socket.IO disconnected');
+    });
 
     // Cleanup function
     return () => {
       socket.off('waiterCalled', handleWaiterCalled);
-      socket.off('feedbackSubmitted', handleFeedbackSubmitted);
+      socket.off('newFeedback', handleNewFeedback);
+      socket.off('connect');
+      socket.off('disconnect');
     };
   }, []);
 
