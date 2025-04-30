@@ -77,7 +77,7 @@ function TableManagement() {
   };
 
   return (
-    <div className="mb-16">
+    <div id="tables-section" className="mb-16">
       {/* Create Table Form */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-800 mb-6">Tables</h1>
