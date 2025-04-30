@@ -1,14 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiBell } from 'react-icons/fi';
+import { FiBell, FiX, FiTrash2 } from 'react-icons/fi';
 import { useNotification } from '../context/NotificationContext';
 
 function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotifications } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const audioRef = useRef(new Audio('/notification-sound.mp3'));
 
+  // Close dropdown when clicking outside
   useEffect(() => {
-    // Load notifications from localStorage on mount
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Load notifications from localStorage on mount
+  useEffect(() => {
     const storedNotifications = localStorage.getItem('notifications');
     if (storedNotifications) {
       const parsedNotifications = JSON.parse(storedNotifications);
@@ -22,80 +37,105 @@ function NotificationBell() {
     }
   }, []);
 
-  const handleNewNotification = (notification) => {
-    // Play sound for new notifications
-    audioRef.current.play().catch(error => {
-      console.warn('Failed to play notification sound:', error);
-    });
-  };
-
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full p-2"
+        className="relative focus:outline-none transition-all duration-200 hover:bg-blue-50 rounded-full p-2 group border-2 border-blue-100 hover:border-blue-200"
+        aria-label="Notifications"
       >
-        <FiBell className="h-6 w-6 text-gray-600" />
+        <FiBell className="h-6 w-6 text-blue-600 group-hover:text-blue-800 transition-colors" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            {unreadCount}
+          <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center transform translate-x-1 -translate-y-1 shadow-sm border border-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
-            {notifications.length > 0 && (
-              <div className="flex space-x-2">
+        <div className="absolute right-2 mt-2 w-85 bg-white rounded-lg shadow-xl border-2 border-blue-200 z-50 transform transition-all duration-200 ease-out">
+          <div className="p-4 border-b-2 border-blue-200 flex justify-between items-center bg-blue-50 rounded-t-lg">
+            <div className="flex items-center">
+              <FiBell className="mr-2 text-blue-600" />
+              <h3 className="text-lg font-semibold text-blue-800 mr-4">
+                Notifications
+              </h3>
+              {notifications.length > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-xs font-medium text-blue-600 hover:text-white hover:bg-blue-500 transition-all duration-200 px-3 py-1 rounded-md border border-blue-300 hover:border-blue-500 whitespace-nowrap mr-2"
+                  title="Mark all as read"
                 >
-                  Mark all as read
+                  Mark As Seen
                 </button>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              {notifications.length > 0 && (
                 <button
                   onClick={clearNotifications}
-                  className="text-sm text-red-600 hover:underline"
+                  className="text-red-500 hover:text-white hover:bg-red-500 transition-all duration-200 p-1.5 rounded-full border border-red-300 hover:border-red-500"
+                  title="Clear all"
                 >
-                  Clear all
+                  <FiTrash2 size={16} />
                 </button>
-              </div>
-            )}
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray-500 hover:text-white hover:bg-gray-500 transition-all duration-200 p-1.5 rounded-full border border-gray-300 hover:border-gray-500"
+                title="Close"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto border-blue-100">
             {notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                No notifications
+              <div className="p-6 text-center flex flex-col items-center bg-blue-50 rounded-b-lg border-t-2 border-blue-100">
+                <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-3 border-2 border-blue-200">
+                  <FiBell className="h-8 w-8 text-blue-400" />
+                </div>
+                <p className="text-blue-700 font-medium">No notifications yet</p>
+                <p className="text-sm text-blue-400 mt-1">We'll notify you when something arrives</p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-4 border-b border-gray-100 flex justify-between items-start ${
-                    notification.read ? 'bg-gray-50' : 'bg-white'
-                  }`}
-                >
-                  <div className="flex-1">
-                    <p className={`text-sm ${notification.read ? 'text-gray-600' : 'text-gray-900 font-medium'}`}>
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(notification.timestamp).toLocaleString()}
-                    </p>
-                  </div>
-                  {!notification.read && (
-                    <button
-                      onClick={() => markAsRead(notification.id)}
-                      className="text-sm text-blue-600 hover:underline ml-2"
-                    >
-                      Mark as read
-                    </button>
-                  )}
-                </div>
-              ))
+              <ul>
+                {notifications.map((notification) => (
+                  <li
+                    key={notification.id}
+                    className={`p-4 border-b-2 border-blue-100 last:border-b-0 transition-colors duration-150 ${
+                      notification.read 
+                        ? 'bg-blue-50/50 hover:bg-blue-100/50' 
+                        : 'bg-white hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className={`text-sm ${
+                          notification.read 
+                            ? 'text-blue-700' 
+                            : 'text-blue-900 font-medium'
+                        }`}>
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-blue-400 mt-1">
+                          {new Date(notification.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      {!notification.read && (
+                        <button
+                          onClick={() => markAsRead(notification.id)}
+                          className="ml-3 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition-all duration-200 px-2 py-1 rounded-md border border-blue-600"
+                          title="Mark as read"
+                        >
+                          New
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>

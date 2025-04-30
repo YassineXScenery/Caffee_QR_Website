@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiChevronDown, FiChevronUp, FiBell } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationBell from './NotificationBell';
 
 const API_URL = 'http://localhost:3000/api';
 
 function MenuDisplay() {
+  // [All existing state declarations remain exactly the same]
   const [menu, setMenu] = useState({});
   const [categoryImages, setCategoryImages] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -23,9 +23,8 @@ function MenuDisplay() {
   const [callWaiterSuccess, setCallWaiterSuccess] = useState(null);
   const [isCallWaiterDisabled, setIsCallWaiterDisabled] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate();
 
+  // [All existing useEffect and functions remain exactly the same]
   useEffect(() => {
     const fetchMenu = async () => {
       setIsLoading(true);
@@ -66,10 +65,6 @@ function MenuDisplay() {
 
     fetchMenu();
 
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-
-    // Check for existing cooldown
     const cooldownEndTime = localStorage.getItem('callWaiterCooldownEnd');
     if (cooldownEndTime) {
       const endTime = parseInt(cooldownEndTime, 10);
@@ -112,13 +107,13 @@ function MenuDisplay() {
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
-    }
     if (isSubmitting) return;
     if (!feedback.trim()) {
       setFeedbackError('Please enter your feedback');
+      return;
+    }
+    if (feedback.trim().length > 500) {
+      setFeedbackError('Feedback cannot exceed 500 characters');
       return;
     }
 
@@ -127,7 +122,7 @@ function MenuDisplay() {
     setIsSubmitting(true);
 
     try {
-      await axios.post(`${API_URL}/feedback`, { message: feedback });
+      await axios.post(`${API_URL}/feedback`, { message: feedback }, { headers: { Authorization: undefined } });
       setFeedbackSuccess('Thank you for your feedback!');
       setFeedback('');
       setTimeout(() => setFeedbackSuccess(null), 3000);
@@ -142,7 +137,7 @@ function MenuDisplay() {
   const handleCallWaiter = async (e) => {
     e.preventDefault();
     const parsedTableNumber = parseInt(tableNumber, 10);
-    if (!parsedTableNumber || isNaN(parsedTableNumber) || parsedTableNumber < 1) {
+    if (!parsedTableNumber || isNaN(parsedTableNumber)) {
       setCallWaiterError('Please enter a valid table number');
       return;
     }
@@ -158,7 +153,6 @@ function MenuDisplay() {
       setIsCallWaiterDisabled(true);
       setCooldownTime(60);
 
-      // Save cooldown end time to localStorage
       const cooldownEndTime = Date.now() + 60 * 1000;
       localStorage.setItem('callWaiterCooldownEnd', cooldownEndTime.toString());
 
@@ -183,27 +177,34 @@ function MenuDisplay() {
 
   return (
     <NotificationProvider>
-      <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 bg-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
+              Our Delicious Menu
+            </h1>
             <div className="flex justify-center items-center space-x-4">
-              <p className="text-lg text-gray-600 max-w-2xl">
+              <p className="text-lg text-blue-600 max-w-2xl">
                 Discover our culinary delights, carefully crafted for your enjoyment
               </p>
-              {isLoggedIn && <NotificationBell />}
+              {localStorage.getItem('token') && <NotificationBell />}
             </div>
+            
             <button
               onClick={() => setShowDialog(true)}
               disabled={isCallWaiterDisabled}
-              className={`mt-4 px-6 py-3 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center mx-auto ${
-                isCallWaiterDisabled ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              className={`mt-6 px-6 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all flex items-center mx-auto shadow-md ${
+                isCallWaiterDisabled 
+                  ? 'bg-blue-300 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
             >
               <FiBell className="h-5 w-5 mr-2" />
               {isCallWaiterDisabled ? `Call Waiter (Wait ${cooldownTime}s)` : 'Call Waiter'}
             </button>
+            
             {callWaiterSuccess && (
-              <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md mx-auto">
+              <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md mx-auto animate-fade-in">
                 <p className="text-sm text-green-600">{callWaiterSuccess}</p>
               </div>
             )}
@@ -211,7 +212,7 @@ function MenuDisplay() {
 
           {showDialog && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+              <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Call Waiter</h2>
                 <form onSubmit={handleCallWaiter}>
                   <div className="mb-4">
@@ -295,31 +296,31 @@ function MenuDisplay() {
           {!isLoading && Object.keys(menu).length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.entries(menu).map(([category, items]) => (
-                <div key={category}>
+                <div key={category} className="transform hover:-translate-y-1 transition-transform duration-300">
                   <button
                     onClick={() => toggleCategory(category)}
-                    className={`w-full flex items-center p-6 text-left transition-colors duration-300 rounded-t-2xl
+                    className={`w-full flex items-center p-6 text-left transition-all duration-300 rounded-t-2xl shadow-md
                       ${categoryStates[category] ? 
-                        'bg-blue-700 text-white rounded-b-none' : 
-                        'bg-blue-600 text-white hover:bg-blue-500 rounded-b-2xl'}`}
+                        'bg-blue-700 text-white' : 
+                        'bg-blue-600 text-white hover:bg-blue-500'}`}
                   >
                     {categoryImages[category] ? (
                       <img
                         src={`http://localhost:3000${categoryImages[category]}`}
                         alt={category}
-                        className="w-20 h-20 object-cover rounded-full mr-4"
+                        className="w-20 h-20 object-cover rounded-full mr-4 border-2 border-blue-300"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2248%22%20height%3D%2248%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210%22%20y%3D%2226%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
                         }}
                       />
                     ) : (
-                      <div className="w-20 h-20 bg-gray-200 rounded-full mr-4 flex items-center justify-center">
-                        <span className="text-gray-500 text-sm">No Image</span>
+                      <div className="w-20 h-20 bg-blue-300 rounded-full mr-4 flex items-center justify-center">
+                        <span className="text-blue-800 text-sm">No Image</span>
                       </div>
                     )}
                     <div className="flex-1 flex justify-between items-center">
-                      <h2 className="text-2xl font-bold">{category}</h2>
+                      <h2 className="text-xl md:text-2xl font-bold">{category}</h2>
                       {categoryStates[category] ? (
                         <FiChevronUp className="h-6 w-6" />
                       ) : (
@@ -338,30 +339,30 @@ function MenuDisplay() {
                         {items.map((item) => (
                           <div
                             key={item.id}
-                            className="bg-white rounded-lg shadow-md overflow-hidden"
+                            className="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-[1.02] transition-transform duration-300"
                           >
                             <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                               {item.image ? (
                                 <img
                                   src={`http://localhost:3000${item.image}`}
                                   alt={item.name}
-                                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                                   onError={(e) => {
                                     e.target.onerror = null;
-                                    e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22110.5%22%20y%3D%22107.1%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+                                    e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210.5%22%20y%3D%22107.1%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
                                   }}
                                 />
                               ) : (
-                                <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-t-lg">
-                                  <span className="text-gray-400 font-medium">No Image</span>
+                                <div className="w-full h-full bg-blue-50 flex items-center justify-center rounded-t-lg">
+                                  <span className="text-blue-400 font-medium">No Image</span>
                                 </div>
                               )}
                             </div>
                             <div className="p-4">
-                              <h3 className="text-lg font-medium text-gray-900 mb-1">{item.name.toLowerCase()}</h3>
-                              <div className="flex items-center text-gray-700">
-                                <span className="font-medium">{item.price.toFixed(2)}</span>
-                                <span className="mr-1 text-gray-500 font-medium">DT</span>
+                              <h3 className="text-lg font-medium text-gray-900 mb-1 capitalize">{item.name.toLowerCase()}</h3>
+                              <div className="flex items-center text-blue-600">
+                                <span className="font-bold">{item.price.toFixed(2)}</span>
+                                <span className="ml-1 text-blue-500 font-medium">DT</span>
                               </div>
                             </div>
                           </div>

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { FiEye, FiHome } from 'react-icons/fi';
 import Login from './components/Login';
 import MenuDisplay from './components/MenuDisplay';
 import Admins from './components/Admins';
@@ -7,11 +8,6 @@ function App() {
   const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('token');
     return token ? children : <Navigate to="/login" />;
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/';
   };
 
   return (
@@ -27,9 +23,9 @@ function App() {
                   <h1 className="text-3xl font-bold text-gray-800">Cafe Menu</h1>
                   <Link
                     to="/login"
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-110 shadow-sm flex items-center justify-center"
                   >
-                    Manage Menu
+                    <FiHome className="h-6 w-6" />
                   </Link>
                 </div>
                 <MenuDisplay />
@@ -48,20 +44,13 @@ function App() {
                 <div className="space-y-8">
                   <div className="flex justify-between items-center mb-4">
                     <h1 className="text-3xl font-bold text-gray-800">Manage Cafe Menu</h1>
-                    <div className="flex space-x-3">
-                      <Link
-                        to="/"
-                        className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-                      >
-                        View Public Menu
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                      >
-                        Logout
-                      </button>
-                    </div>
+                    <Link
+                      to="/"
+                      className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-sm"
+                    >
+                      <FiEye className="h-5 w-5" />
+                      <span>View Public Menu</span>
+                    </Link>
                   </div>
                   <Admins />
                 </div>

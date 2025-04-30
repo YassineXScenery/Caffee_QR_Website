@@ -14,24 +14,35 @@ function CallWaiterManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch tables only once on component mount
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
+    const fetchTables = async () => {
       try {
-        const [requestsRes, tablesRes] = await Promise.all([
-          axios.get(`${API_URL}/call-waiter`),
-          axios.get(`${API_URL}/tables`)
-        ]);
-        setRequests(requestsRes.data);
+        const tablesRes = await axios.get(`${API_URL}/tables`);
         setTables(tablesRes.data.map(t => t.table_number));
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load data');
+        setError(err.response?.data?.error || 'Failed to load tables');
+      }
+    };
+
+    fetchTables();
+  }, []); // Empty dependency array to run only once on mount
+
+  // Fetch requests and set up socket listener
+  useEffect(() => {
+    const fetchRequests = async () => {
+      setIsLoading(true);
+      try {
+        const requestsRes = await axios.get(`${API_URL}/call-waiter`);
+        setRequests(requestsRes.data);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to load requests');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchRequests();
 
     const handleCallWaiter = (request) => {
       setRequests(prev => {
@@ -48,7 +59,7 @@ function CallWaiterManagement() {
     return () => {
       socket.off('waiterCalled', handleCallWaiter);
     };
-  }, [tables]);
+  }, [tables]); // Depend on tables, but tables is now stable
 
   const handleClearRequest = async (id) => {
     try {

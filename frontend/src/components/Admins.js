@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiUsers, FiTag, FiBell, FiList, FiMessageSquare } from 'react-icons/fi';
+import { FiMenu, FiX, FiUsers, FiTag, FiBell, FiList, FiMessageSquare, FiLogOut, FiHome } from 'react-icons/fi';
 import AdminManagement from './AdminManagement';
 import ItemManagement from './ItemManagement';
 import TableManagement from './TableManagement';
 import CategoryManagement from './CategoryManagement';
 import CallWaiterManagement from './CallWaiterManagement';
 import FeedbackManagement from './FeedbackManagement';
-import { NotificationProvider } from '../context/NotificationContext'; // Corrected path
+import { NotificationProvider } from '../context/NotificationContext';
 import NotificationBell from './NotificationBell';
 
 function Admins() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('admins-section');
   const navigate = useNavigate();
   const mainContentRef = useRef(null);
 
@@ -19,9 +20,10 @@ function Admins() {
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element && mainContentRef.current) {
+        setActiveSection(sectionId);
         const mainContentTop = mainContentRef.current.getBoundingClientRect().top;
         const elementTop = element.getBoundingClientRect().top;
-        const headerHeight = 64;
+        const headerHeight = 20;
 
         let scrollPosition = elementTop - mainContentTop + mainContentRef.current.scrollTop - headerHeight;
 
@@ -29,15 +31,11 @@ function Admins() {
           scrollPosition = 0;
         }
 
-        console.log(`Scrolling to section: ${sectionId}, Position: ${scrollPosition}`);
-
         mainContentRef.current.scrollTo({
           top: scrollPosition,
           behavior: 'smooth',
         });
         setIsSidebarOpen(false);
-      } else {
-        console.error(`Section with ID ${sectionId} not found or mainContentRef is not set. Element: ${element}, Ref: ${mainContentRef.current}`);
       }
     }, 100);
   };
@@ -54,99 +52,194 @@ function Admins() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    const sections = [
+      'admins-section',
+      'categories-section',
+      'items-section',
+      'tables-section',
+      'call-waiter-section',
+      'feedback-section',
+    ];
+
+    const handleScroll = () => {
+      if (!mainContentRef.current) return;
+
+      let currentSection = 'admins-section';
+      let minDistance = Infinity;
+
+      sections.forEach((sectionId) => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const mainContentTop = mainContentRef.current.getBoundingClientRect().top;
+          const elementTop = element.getBoundingClientRect().top;
+          const distance = Math.abs(elementTop - mainContentTop);
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            currentSection = sectionId;
+          }
+        }
+      });
+
+      setActiveSection(currentSection);
+    };
+
+    const mainContent = mainContentRef.current;
+    if (mainContent) {
+      mainContent.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (mainContent) {
+        mainContent.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []); // Empty dependency array since sections is now defined inside
+
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-gray-50 flex">
-        <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 transition-transform duration-300 ease-in-out md:w-64 md:static md:shadow-none`}
-        >
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">Admin Panel</h2>
-            <button
-              className="md:hidden text-gray-600 hover:text-gray-800"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <FiX className="h-6 w-6" />
-            </button>
-          </div>
-          <nav className="mt-6">
-            <button
-              onClick={() => scrollToSection('admins-section')}
-              className="flex items-center w-full px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <FiUsers className="h-5 w-5 mr-3" />
-              Admin Accounts
-            </button>
-            <button
-              onClick={() => scrollToSection('categories-section')}
-              className="flex items-center w-full px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <FiList className="h-5 w-5 mr-3" />
-              Categories
-            </button>
-            <button
-              onClick={() => scrollToSection('items-section')}
-              className="flex items-center w-full px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <FiTag className="h-5 w-5 mr-3" />
-              Menu Items
-            </button>
-            <button
-              onClick={() => scrollToSection('tables-section')}
-              className="flex items-center w-full px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <svg className="h-5 w-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m4-8h4m-4 0a2 2 0 00-2 2v2h8V5a2 2 0 00-2-2m-4 8v4m4-4v4" />
-              </svg>
-              Tables
-            </button>
-            <button
-              onClick={() => scrollToSection('call-waiter-section')}
-              className="flex items-center w-full px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <FiBell className="h-5 w-5 mr-3" />
-              Call Waiter Requests
-            </button>
-            <button
-              onClick={() => scrollToSection('feedback-section')}
-              className="flex items-center w-full px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <FiMessageSquare className="h-5 w-5 mr-3" />
-              Customer Feedback
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-6 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-            >
-              <FiX className="h-5 w-5 mr-3" />
-              Logout
-            </button>
-          </nav>
-        </div>
+      <div className="min-h-screen bg-blue-50 flex">
+        {/* Mobile sidebar backdrop */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
-        <div className="flex-1 flex flex-col">
-          <header className="bg-white shadow-sm sticky top-0 z-40">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-semibold text-gray-800">Cafe Management</h1>
-                <NotificationBell />
-              </div>
+        {/* Sidebar */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 transition-transform duration-300 ease-in-out md:w-64 md:static rounded-r-3xl overflow-hidden`}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between h-20 px-6 border-b border-blue-100 bg-blue-500">
+              <h2 className="text-xl font-semibold text-white"> Cafe Admin Panel </h2>
               <button
-                className="md:hidden text-gray-600 hover:text-gray-800"
-                onClick={() => setIsSidebarOpen(true)}
+                className="md:hidden text-blue-100 hover:text-white"
+                onClick={() => setIsSidebarOpen(false)}
               >
-                <FiMenu className="h-6 w-6" />
+                <FiX className="h-6 w-6" />
               </button>
             </div>
+            
+            <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-2">
+              <button
+                onClick={() => scrollToSection('admins-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'admins-section' 
+                    ? 'bg-blue-100 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <FiUsers className="h-5 w-5 mr-3" />
+                <span className="font-medium">Admin Accounts</span>
+              </button>
+
+              <button
+                onClick={() => scrollToSection('categories-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'categories-section' 
+                    ? 'bg-blue-100 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <FiList className="h-5 w-5 mr-3" />
+                <span className="font-medium">Categories</span>
+              </button>
+
+              <button
+                onClick={() => scrollToSection('items-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'items-section' 
+                    ? 'bg-blue-100 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <FiTag className="h-5 w-5 mr-3" />
+                <span className="font-medium">Menu Items</span>
+              </button>
+
+              <button
+                onClick={() => scrollToSection('tables-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'tables-section' 
+                    ? 'bg-blue-100 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <svg className="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m4-8h4m-4 0a2 2 0 00-2 2v2h8V5a2 2 0 00-2-2m-4 8v4m4-4v4" />
+                </svg>
+                <span className="font-medium">Tables</span>
+              </button>
+
+              <button
+                onClick={() => scrollToSection('call-waiter-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'call-waiter-section' 
+                    ? 'bg-blue-100 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <FiBell className="h-5 w-5 mr-3" />
+                <span className="font-medium">Waiters Calls</span>
+              </button>
+
+              <button
+                onClick={() => scrollToSection('feedback-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'feedback-section' 
+                    ? 'bg-blue-100 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <FiMessageSquare className="h-5 w-5 mr-3" />
+                <span className="font-medium">Customer Feedback</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-3 mt-4 text-blue-600 hover:bg-blue-50 rounded-2xl transition-all"
+              >
+                <FiLogOut className="h-5 w-5 mr-3" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="bg-white shadow-sm sticky top-0 z-30">
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center space-x-4">
+                <button
+                  className="md:hidden text-gray-600 hover:text-blue-500"
+                  onClick={() => setIsSidebarOpen(true)}
+                >
+                  <FiMenu className="h-6 w-6" />
+                </button>
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-800 flex items-center">
+                  <FiHome className="mr-2 text-blue-500" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
+                    Cafe Management Dashboard
+                  </span>
+                </h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <NotificationBell />
+              </div>
+            </div>
           </header>
+
           <main
             ref={mainContentRef}
-            className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-8"
+            className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-8 bg-blue-50"
             style={{ maxHeight: 'calc(100vh - 4rem)' }}
           >
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto space-y-8">
               <AdminManagement />
               <CategoryManagement />
               <ItemManagement />

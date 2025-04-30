@@ -342,11 +342,11 @@ function ItemManagement() {
       )}
 
       {isLoadingItems && items.length === 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
-              <div className="h-48 bg-gray-200 rounded-lg mb-3"></div>
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="bg-white p-2 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+              <div className="h-32 bg-gray-200 rounded-lg mb-2"></div>
+              <div className="h-5 bg-gray-200 rounded w-3/4 mb-1"></div>
               <div className="h-4 bg-gray-200 rounded w-1/4"></div>
             </div>
           ))}
@@ -360,10 +360,10 @@ function ItemManagement() {
           <p className="mt-1 text-sm text-gray-500">Add your first menu item to get started</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {items.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-48 bg-gray-100">
+              <div className="relative h-32 bg-gray-100">
                 {item.image ? (
                   <img
                     src={`${BASE_URL}${item.image}`}
@@ -376,31 +376,31 @@ function ItemManagement() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <FiImage className="h-12 w-12 text-gray-400" />
+                    <FiImage className="h-10 w-10 text-gray-400" />
                   </div>
                 )}
-                <div className="absolute top-2 right-2 flex space-x-1">
+                <div className="absolute top-1.5 right-1.5 flex space-x-1">
                   <button
                     onClick={() => startEditingItem(item)}
-                    className="p-2 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
+                    className="p-1.5 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
                     title="Edit"
                   >
-                    <FiEdit2 className="h-4 w-4" />
+                    <FiEdit2 className="h-3 w-3" />
                   </button>
                   <button
                     onClick={() => deleteItem(item.id)}
-                    className="p-2 bg-white rounded-full shadow-md text-red-600 hover:bg-red-50 transition-colors"
+                    className="p-1.5 bg-white rounded-full shadow-md text-red-600 hover:bg-red-50 transition-colors"
                     title="Delete"
                   >
-                    <FiTrash2 className="h-4 w-4" />
+                    <FiTrash2 className="h-3 w-3" />
                   </button>
                 </div>
               </div>
-              <div className="p-4">
-                <h3 className="text-lg font-medium text-gray-800 truncate">{item.name}</h3>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-sm text-gray-500">{item.categorie}</span>
-                  <span className="font-medium text-gray-900">{item.price.toFixed(2)} DT</span>
+              <div className="p-2">
+                <h3 className="text-sm font-medium text-gray-800 truncate">{item.name}</h3>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-gray-500">{item.categorie}</span>
+                  <span className="text-sm font-medium text-gray-900">{item.price.toFixed(2)} DT</span>
                 </div>
               </div>
             </div>
