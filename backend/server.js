@@ -1,56 +1,79 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
 const cors = require('cors');
-const adminController = require('./controllers/adminController');
+const jwt = require('jsonwebtoken');
+const path = require('path');
+const socketIo = require('socket.io');
+const http = require('http');
+const schedule = require('node-schedule');
+const db = require('./databasemenu');
+const tableRoutes = require('./routes/tables');
 const adminRoutes = require('./routes/admin');
+const itemRoutes = require('./routes/items');
+const categoryRoutes = require('./routes/menu');
+const callWaiterRoutes = require('./routes/call-waiter');
+const feedbackRoutes = require('./routes/feedback'); // Import feedback routes
 
 const app = express();
+const server = http.createServer(app);
 
-// Enable CORS for requests from the frontend
+// Configure CORS for Express - Allow all origins for debugging
 app.use(cors({
-  origin: 'http://localhost:3001',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: '*',
 }));
 
-// Middleware to parse JSON and form-data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Ensure the uploads folder exists
-const uploadsDir = path.join(__dirname, 'Uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-  console.log('Created uploads directory at:', uploadsDir);
-}
-
-// Serve static files from the uploads folder with additional logging
-app.use('/uploads', (req, res, next) => {
-  console.log(`Requesting file: ${req.path} from directory: ${uploadsDir}`);
-  next();
-}, express.static(uploadsDir));
-console.log('Serving static files from:', uploadsDir);
-
-// Routes
-app.use('/api/items', require('./routes/items'));
-app.use('/api/menu', require('./routes/menu'));
-app.use('/api/feedback', require('./routes/feedback')); // Ensure this is present
-
-// Define the login route separately without verifyToken
-app.post('/api/admins/login', adminController.loginAdmin);
-
-// Apply verifyToken middleware to other admin routes
-app.use('/api/admins', adminController.verifyToken, adminRoutes);
-
-// Fallback for 404 errors
-app.use((req, res) => {
-  console.log(`404 Not Found: ${req.method} ${req.url}`);
-  res.status(404).send('Not Found');
+// Configure Socket.IO with CORS and connection stability options
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  },
+  maxHttpBufferSize: 1e6,
+  pingTimeout: 20000,
+  pingInterval: 25000,
 });
 
-// Start the server
+// Attach io to the app so routes can access it
+app.set('io', io);
+
 const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const JWT_SECRET = 'your_jwt_secret_key';
+const UPLOADS_DIR = path.join(__dirname, 'Uploads');
+
+app.use(express.json());
+app.use('/Uploads', express.static(UPLOADS_DIR));
+console.log(`Serving static files from: ${UPLOADS_DIR}`);
+
+app.use('/api/tables', tableRoutes);
+app.use('/api/admins', adminRoutes);
+app.use('/api/items', itemRoutes);
+app.use('/api/menu', categoryRoutes);
+app.use('/api/call-waiter', callWaiterRoutes);
+app.use('/api/feedback', feedbackRoutes); // Mount feedback routes
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('A client connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// Schedule cleanup of old call waiter requests (daily at midnight)
+schedule.scheduleJob('0 0 * * *', () => {
+  db.query('DELETE FROM call_waiter_requests WHERE created_at < NOW() - INTERVAL 1 DAY', (err) => {
+    if (err) {
+      console.error('Error cleaning up old requests:', err);
+    } else {
+      console.log('Old call waiter requests cleaned up');
+    }
+  });
+});
+
+app.get('/', (req, res) => {
+  res.send('Cafe Menu API');
+});
+
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

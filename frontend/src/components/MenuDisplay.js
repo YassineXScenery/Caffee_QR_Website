@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiChevronDown, FiChevronUp, FiBell } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -15,6 +15,13 @@ function MenuDisplay() {
   const [feedbackError, setFeedbackError] = useState(null);
   const [feedbackSuccess, setFeedbackSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Call Waiter state
+  const [tableNumber, setTableNumber] = useState('');
+  const [showDialog, setShowDialog] = useState(false);
+  const [callWaiterError, setCallWaiterError] = useState(null);
+  const [callWaiterSuccess, setCallWaiterSuccess] = useState(null);
+  const [isCallWaiterDisabled, setIsCallWaiterDisabled] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(0);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -80,8 +87,8 @@ function MenuDisplay() {
     setIsSubmitting(true);
 
     try {
-      await axios.post(`${API_URL}/feedback`, { message: feedback });
-      setFeedbackSuccess('Thank you for your feedback!');
+      const response = await axios.post(`${API_URL}/feedback`, { message: feedback });
+      setFeedbackSuccess(response.data.message || 'Thank you for your feedback!'); // Use the message from the response
       setFeedback('');
       setTimeout(() => setFeedbackSuccess(null), 3000);
     } catch (err) {
@@ -89,6 +96,41 @@ function MenuDisplay() {
       setFeedbackError(err.response?.data?.error || 'Failed to submit feedback');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCallWaiter = async (e) => {
+    e.preventDefault();
+    const parsedTableNumber = parseInt(tableNumber, 10);
+    if (!parsedTableNumber || isNaN(parsedTableNumber) || parsedTableNumber < 1) {
+      setCallWaiterError('Please enter a valid table number');
+      return;
+    }
+
+    setCallWaiterError(null);
+    setCallWaiterSuccess(null);
+
+    try {
+      const response = await axios.post(`${API_URL}/call-waiter`, { tableNumber: parsedTableNumber });
+      setCallWaiterSuccess('Waiter called successfully!');
+      setShowDialog(false);
+      setTableNumber('');
+      setIsCallWaiterDisabled(true);
+      setCooldownTime(60);
+      const interval = setInterval(() => {
+        setCooldownTime(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsCallWaiterDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      setTimeout(() => setCallWaiterSuccess(null), 3000);
+    } catch (err) {
+      console.error('Error calling waiter:', err);
+      setCallWaiterError(err.response?.data?.error || 'Failed to call waiter');
     }
   };
 
@@ -100,7 +142,71 @@ function MenuDisplay() {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Discover our culinary delights, carefully crafted for your enjoyment
         </p>
+        <button
+          onClick={() => setShowDialog(true)}
+          disabled={isCallWaiterDisabled}
+          className={`mt-4 px-6 py-3 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center mx-auto ${
+            isCallWaiterDisabled ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          <FiBell className="h-5 w-5 mr-2" />
+          {isCallWaiterDisabled ? `Call Waiter (Wait ${cooldownTime}s)` : 'Call Waiter'}
+        </button>
+        {callWaiterSuccess && (
+          <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md mx-auto">
+            <p className="text-sm text-green-600">{callWaiterSuccess}</p>
+          </div>
+        )}
       </div>
+
+      {/* Call Waiter Dialog */}
+      {showDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Call Waiter</h2>
+            <form onSubmit={handleCallWaiter}>
+              <div className="mb-4">
+                <label htmlFor="tableNumber" className="block text-sm font-medium text-gray-600 mb-1">
+                  Table Number
+                </label>
+                <input
+                  type="number"
+                  id="tableNumber"
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  placeholder="Enter your table number"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  min="1"
+                />
+                {callWaiterError && (
+                  <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                    <p className="text-sm text-red-600">{callWaiterError}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                >
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDialog(false);
+                    setTableNumber('');
+                    setCallWaiterError(null);
+                  }}
+                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Menu Display */}
       {isLoading && (
@@ -220,7 +326,7 @@ function MenuDisplay() {
         </div>
       )}
 
-      {/* Feedback Form - Moved to Bottom */}
+      {/* Feedback Form */}
       <div className="mt-12 bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">We Value Your Feedback</h2>
         <form onSubmit={handleFeedbackSubmit}>

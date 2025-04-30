@@ -29,13 +29,25 @@ router.post('/', feedbackLimiter, (req, res) => {
     allowedAttributes: {},
   });
 
-  const query = 'INSERT INTO feedback (message) VALUES (?)';
-  connection.query(query, [sanitizedMessage], (error, results) => {
+  const createdAt = new Date(); // Add created_at for consistency
+  const query = 'INSERT INTO feedback (message, created_at) VALUES (?, ?)';
+  connection.query(query, [sanitizedMessage, createdAt], (error, results) => {
     if (error) {
       console.error('Error saving feedback:', error);
       return res.status(500).json({ error: 'Failed to submit feedback' });
     }
-    res.status(201).json({ message: 'Feedback submitted successfully' });
+
+    const newFeedback = {
+      id: results.insertId,
+      message: sanitizedMessage,
+      createdAt: createdAt.toISOString(),
+    };
+
+    // Emit the event using Socket.IO
+    const io = req.app.get('io');
+    io.emit('newFeedback', newFeedback);
+
+    res.status(201).json({ message: 'Feedback submitted successfully', feedback: newFeedback });
   });
 });
 
@@ -46,7 +58,13 @@ router.get('/', adminController.verifyToken, (req, res) => {
       console.error('Error fetching feedback:', error);
       return res.status(500).json({ error: 'Failed to fetch feedback' });
     }
-    res.json(results);
+    // Map created_at to createdAt for consistency with frontend
+    const feedback = results.map(row => ({
+      id: row.id,
+      message: row.message,
+      createdAt: row.created_at.toISOString(),
+    }));
+    res.json(feedback);
   });
 });
 
