@@ -7,7 +7,6 @@ const loadRequests = () => {
   return new Promise((resolve, reject) => {
     db.query('SELECT * FROM call_waiter_requests', (err, results) => {
       if (err) {
-        console.error('Error loading call waiter requests:', err);
         if (err.code === 'ER_NO_SUCH_TABLE') {
           resolve([]);
         } else {
@@ -28,43 +27,32 @@ const loadRequests = () => {
 router.get('/', async (req, res) => {
   try {
     const requests = await loadRequests();
-    console.log('Loaded call waiter requests:', requests);
     res.status(200).json(requests);
   } catch (err) {
     console.error('Failed to load call waiter requests:', err);
-    res.status(500).json({ error: 'Failed to load call waiter requests. Please ensure the database is set up correctly.' });
+    res.status(500).json({ error: 'Failed to load call waiter requests' });
   }
 });
 
 router.post('/', (req, res) => {
   const { tableNumber } = req.body;
-  console.log('Received call waiter request:', req.body);
 
   if (!tableNumber || isNaN(tableNumber) || tableNumber < 1) {
-    console.log(`Invalid table number received: ${tableNumber}`);
     return res.status(400).json({ error: 'Invalid table number' });
   }
-
-  console.log(`Validating table number: ${tableNumber}`);
 
   // Validate table number against existing tables
   db.query('SELECT table_number FROM tables WHERE table_number = ?', [tableNumber], (err, results) => {
     if (err) {
-      console.error('Error checking table number:', err);
       if (err.code === 'ER_NO_SUCH_TABLE') {
-        return res.status(500).json({ error: 'Tables are not set up in the database. Please create tables first.' });
+        return res.status(500).json({ error: 'Tables are not set up in the database' });
       }
-      return res.status(500).json({ error: 'Failed to validate table number. Please ensure the tables are set up correctly.' });
+      return res.status(500).json({ error: 'Failed to validate table number' });
     }
-
-    console.log(`Query results for table ${tableNumber}:`, results);
 
     if (results.length === 0) {
-      console.log(`Table ${tableNumber} does not exist`);
       return res.status(400).json({ error: `Table ${tableNumber} does not exist` });
     }
-
-    console.log(`Table ${tableNumber} exists, proceeding with request`);
 
     // Insert the new request into the database
     const createdAt = new Date();
@@ -73,9 +61,8 @@ router.post('/', (req, res) => {
       [tableNumber, createdAt],
       (err, result) => {
         if (err) {
-          console.error('Error saving call waiter request:', err);
           if (err.code === 'ER_NO_SUCH_TABLE') {
-            return res.status(500).json({ error: 'Call waiter requests table is not set up in the database. Please create the table.' });
+            return res.status(500).json({ error: 'Call waiter requests table is not set up' });
           }
           return res.status(500).json({ error: 'Failed to save call waiter request' });
         }
@@ -86,11 +73,9 @@ router.post('/', (req, res) => {
           createdAt: createdAt.toISOString(),
         };
 
-        console.log('New call waiter request created:', newRequest);
-
         // Emit the event using Socket.IO
         const io = req.app.get('io');
-        io.emit('callWaiter', newRequest);
+        io.emit('waiterCalled', newRequest); // Changed event name to match client expectation
 
         res.status(201).json(newRequest);
       }

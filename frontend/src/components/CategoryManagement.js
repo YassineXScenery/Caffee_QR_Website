@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -110,13 +110,14 @@ function CategoryManagement({ onCategoryChange }) {
   }, [loadCategories]);
 
   return (
-    <div id="categories-section" className="mb-16">
+    <div id="categories-section" className="mb-16 px-4 sm:px-0">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
         Menu Categories
         <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
           {categories.length} {categories.length === 1 ? 'category' : 'categories'}
         </span>
       </h1>
+
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -134,24 +135,39 @@ function CategoryManagement({ onCategoryChange }) {
               />
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Category Image (optional)</label>
-              <input
-                type="file"
-                accept="image/jpeg,image/jpg,image/png"
-                onChange={(e) => setCategoryImage(e.target.files[0])}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              {editingCategory && editingCategory.image && !categoryImage && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500">Current image:</p>
-                  <img
-                    src={`${BASE_URL}${editingCategory.image}?t=${new Date().getTime()}`}
-                    alt="Current category"
-                    className="mt-1 h-16 w-16 object-cover rounded-lg"
-                    onError={(e) => console.error(`Failed to load current image for editing: ${BASE_URL}${editingCategory.image}`)}
+              <label className="block text-sm font-medium text-gray-600 mb-1">Category Image</label>
+              <div className="flex items-center space-x-4">
+                <label className="flex flex-col items-center justify-center w-full max-w-xs p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  {categoryImage ? (
+                    <img 
+                      src={URL.createObjectURL(categoryImage)} 
+                      alt="Preview" 
+                      className="h-16 w-16 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <FiImage className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500">Click to upload</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setCategoryImage(e.target.files[0])}
+                    className="hidden"
                   />
-                </div>
-              )}
+                </label>
+                {editingCategory?.image && !categoryImage && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm text-gray-500 mb-1">Current Image</p>
+                    <img
+                      src={`${BASE_URL}${editingCategory.image}`}
+                      alt="Current"
+                      className="h-16 w-16 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-3">
               <button
@@ -161,8 +177,8 @@ function CategoryManagement({ onCategoryChange }) {
               >
                 {isLoadingCategories ? (
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                 ) : editingCategory ? (
                   <FiCheck className="mr-1" />
@@ -185,6 +201,7 @@ function CategoryManagement({ onCategoryChange }) {
           </form>
         </div>
       </div>
+
       {errorCategories && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
           <div className="flex">
@@ -199,6 +216,7 @@ function CategoryManagement({ onCategoryChange }) {
           </div>
         </div>
       )}
+
       {successCategories && (
         <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
           <div className="flex">
@@ -213,64 +231,66 @@ function CategoryManagement({ onCategoryChange }) {
           </div>
         </div>
       )}
+
       {isLoadingCategories && categories.length === 0 ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-12 w-12"></div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+              <div className="h-40 bg-gray-200 rounded-lg mb-3"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
         </div>
       ) : categories.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No categories</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding your first category.</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No categories yet</h3>
+          <p className="mt-1 text-sm text-gray-500">Add your first category to get started</p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-gray-100">
-          <ul className="divide-y divide-gray-100">
-            {categories.map((category) => (
-              <li key={category.id} className="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {category.image ? (
-                      <img
-                        src={`${BASE_URL}${category.image}?t=${new Date().getTime()}`}
-                        alt={category.categorie}
-                        className="h-12 w-12 object-cover rounded-lg"
-                        onError={(e) => console.error(`Failed to load image for ${category.categorie}: ${BASE_URL}${category.image}`)}
-                      />
-                    ) : (
-                      <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-500 text-sm">No Image</span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-base font-medium text-gray-800">{category.categorie}</p>
-                      <p className="text-sm text-gray-500">Category ID: {category.id}</p>
-                    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => (
+            <div key={category.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="relative h-40 bg-gray-100">
+                {category.image ? (
+                  <img
+                    src={`${BASE_URL}${category.image}`}
+                    alt={category.categorie}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYWFhYWEiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <FiImage className="h-12 w-12 text-gray-400" />
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => startEditingCategory(category)}
-                      className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                      title="Edit"
-                    >
-                      <FiEdit2 className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => deleteCategory(category.id)}
-                      className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Delete"
-                    >
-                      <FiTrash2 className="h-5 w-5" />
-                    </button>
-                  </div>
+                )}
+                <div className="absolute top-2 right-2 flex space-x-1">
+                  <button
+                    onClick={() => startEditingCategory(category)}
+                    className="p-2 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="Edit"
+                  >
+                    <FiEdit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteCategory(category.id)}
+                    className="p-2 bg-white rounded-full shadow-md text-red-600 hover:bg-red-50 transition-colors"
+                    title="Delete"
+                  >
+                    <FiTrash2 className="h-4 w-4" />
+                  </button>
                 </div>
-              </li>
-            ))}
-          </ul>
+              </div>
+              <div className="p-4">
+              <h3 className="text-lg font-medium text-gray-800 truncate">{category.categorie}</h3>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { FiUser, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck } from 'react-icons/fi';
+import { FiUser, FiEdit2, FiTrash2, FiX, FiCheck, FiPlus } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -132,13 +132,14 @@ function AdminManagement() {
   }, [loadAdmins]);
 
   return (
-    <div id="admins-section" className="mb-16">
+    <div id="admins-section" className="mb-16 px-4 sm:px-0">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
         Admin Accounts
         <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
           {admins.length} {admins.length === 1 ? 'admin' : 'admins'}
         </span>
       </h1>
+
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -217,6 +218,7 @@ function AdminManagement() {
           </form>
         </div>
       </div>
+
       {errorAdmins && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
           <div className="flex">
@@ -231,6 +233,7 @@ function AdminManagement() {
           </div>
         </div>
       )}
+
       {successAdmins && (
         <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
           <div className="flex">
@@ -245,55 +248,59 @@ function AdminManagement() {
           </div>
         </div>
       )}
+
       {isLoadingAdmins && admins.length === 0 ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-12 w-12" />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : admins.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No admins</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding your first admin.</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No admins yet</h3>
+          <p className="mt-1 text-sm text-gray-500">Add your first admin account to get started</p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-gray-100">
-          <ul className="divide-y divide-gray-100">
-            {admins.map((admin) => (
-              <li key={admin.id} className="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <FiUser className="h-6 w-6 text-gray-500" />
-                    </div>
-                    <div>
-                      <p className="text-base font-medium text-gray-800">{admin.username}</p>
-                      <p className="text-sm text-gray-500">Admin ID: {admin.id}</p>
-                    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {admins.map((admin) => (
+            <div key={admin.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FiUser className="h-5 w-5 text-gray-500" />
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => startEditingAdmin(admin)}
-                      className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                      title="Edit"
-                    >
-                      <FiEdit2 className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => deleteAdmin(admin.id)}
-                      className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Delete"
-                    >
-                      <FiTrash2 className="h-5 w-5" />
-                    </button>
+                  <div>
+                    <h3 className="font-medium text-gray-800">{admin.username}</h3>
+                    <p className="text-xs text-gray-500">Admin account</p>
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => startEditingAdmin(admin)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Edit"
+                  >
+                    <FiEdit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteAdmin(admin.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    title="Delete"
+                  >
+                    <FiTrash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

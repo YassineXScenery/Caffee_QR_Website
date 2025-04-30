@@ -6,180 +6,142 @@ import { FiBell, FiTrash2 } from 'react-icons/fi';
 const API_URL = 'http://localhost:3000/api';
 const SOCKET_URL = 'http://localhost:3000';
 
-// Initialize socket outside the component to ensure a single instance
-const socket = io(SOCKET_URL, {
-  reconnectionAttempts: 5,
-});
+const socket = io(SOCKET_URL, { reconnectionAttempts: 5 });
 
 function CallWaiterManagement() {
-  const [callWaiterRequests, setCallWaiterRequests] = useState([]);
-  const [validTableNumbers, setValidTableNumbers] = useState([]);
-  const [isLoadingCallWaiter, setIsLoadingCallWaiter] = useState(false);
-  const [errorCallWaiter, setErrorCallWaiter] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [tables, setTables] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadCallWaiterRequests = async () => {
-      setIsLoadingCallWaiter(true);
-      setErrorCallWaiter(null);
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        // Fetch valid table numbers
-        let tableNumbers = [];
-        try {
-          const tablesResponse = await axios.get(`${API_URL}/tables`);
-          tableNumbers = tablesResponse.data.map(table => table.table_number);
-        } catch (error) {
-          console.error('Error fetching table numbers:', error);
-          setErrorCallWaiter(error.response?.data?.error || 'Failed to fetch table numbers');
-          tableNumbers = [];
-        }
-        setValidTableNumbers(tableNumbers);
-
-        // Fetch call waiter requests
-        const response = await axios.get(`${API_URL}/call-waiter`);
-        setCallWaiterRequests(response.data);
-      } catch (error) {
-        console.error('Error loading call waiter requests:', error);
-        setErrorCallWaiter(error.response?.data?.error || 'Failed to load call waiter requests');
+        const [requestsRes, tablesRes] = await Promise.all([
+          axios.get(`${API_URL}/call-waiter`),
+          axios.get(`${API_URL}/tables`)
+        ]);
+        setRequests(requestsRes.data);
+        setTables(tablesRes.data.map(t => t.table_number));
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to load data');
       } finally {
-        setIsLoadingCallWaiter(false);
+        setIsLoading(false);
       }
     };
 
-    loadCallWaiterRequests();
+    fetchData();
 
-    // Set up socket event listeners
-    socket.on('connect', () => {
-      console.log('Connected to Socket.IO server');
-    });
+    const handleCallWaiter = (request) => {
+      setRequests(prev => {
+        const exists = prev.some(r => r.id === request.id);
+        if (!exists && tables.includes(request.tableNumber)) {
+          return [...prev, request];
+        }
+        return prev;
+      });
+    };
 
-    socket.on('callWaiter', (request) => {
-      if (validTableNumbers.includes(request.tableNumber)) {
-        setCallWaiterRequests((prev) => [...prev, request]);
-        const audio = new Audio('/notification.mp3');
-        audio.play().catch((error) => console.error('Error playing notification sound:', error));
-        alert(`Table ${request.tableNumber} has called for a waiter!`);
-      }
-    });
+    socket.on('waiterCalled', handleCallWaiter);
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket.IO connection error:', error);
-      setErrorCallWaiter('Failed to connect to real-time updates');
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Disconnected from Socket.IO server');
-    });
-
-    // Cleanup: Remove event listeners but keep the socket connection alive
     return () => {
-      socket.off('connect');
-      socket.off('callWaiter');
-      socket.off('connect_error');
-      socket.off('disconnect');
+      socket.off('waiterCalled', handleCallWaiter);
     };
-  }, []); // Remove validTableNumbers from dependencies to prevent loop
+  }, [tables]);
 
-  const handleClearRequest = async (requestId) => {
+  const handleClearRequest = async (id) => {
     try {
-      await axios.delete(`${API_URL}/call-waiter/${requestId}`);
-      setCallWaiterRequests((prev) => prev.filter((request) => request.id !== requestId));
-    } catch (error) {
-      console.error('Error clearing call waiter request:', error);
-      setErrorCallWaiter(error.response?.data?.error || 'Failed to clear call waiter request');
+      await axios.delete(`${API_URL}/call-waiter/${id}`);
+      setRequests(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to clear request');
     }
   };
 
-  const handleRemoveAllRequests = async () => {
+  const handleClearAll = async () => {
+    if (!window.confirm('Clear all requests?')) return;
     try {
       await axios.delete(`${API_URL}/call-waiter`);
-      setCallWaiterRequests([]);
-    } catch (error) {
-      console.error('Error removing all call waiter requests:', error);
-      setErrorCallWaiter(error.response?.data?.error || 'Failed to remove all call waiter requests');
+      setRequests([]);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to clear requests');
     }
   };
 
-  const filteredRequests = callWaiterRequests.filter(request =>
-    validTableNumbers.includes(request.tableNumber)
-  );
-
   return (
-    <div id="call-waiter-section" className="mb-16">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-        Call Waiter Requests
-        <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-          {filteredRequests.length} {filteredRequests.length === 1 ? 'request' : 'requests'}
-        </span>
-      </h1>
-      {errorCallWaiter && (
+    <div id="call-waiter-section" className="mb-16 px-4 sm:px-0">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
+          <FiBell className="mr-2" />
+          Waiter Calls
+          <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+            {requests.length} {requests.length === 1 ? 'request' : 'requests'}
+          </span>
+        </h1>
+        {requests.length > 0 && (
+          <button 
+            onClick={handleClearAll}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Clear All
+          </button>
+        )}
+      </div>
+
+      {error && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
-          <div className="flex">
-            <div class="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-600">{errorCallWaiter}</p>
-            </div>
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         </div>
       )}
-      {isLoadingCallWaiter && callWaiterRequests.length === 0 ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-12 w-12"></div>
+
+      <div className="min-h-[200px]">
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
           </div>
-        </div>
-      ) : filteredRequests.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No call waiter requests</h3>
-          <p className="mt-1 text-sm text-gray-500">No tables have called for service yet.</p>
-        </div>
-      ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-gray-100">
-          <div className="flex justify-end p-4">
-            <button
-              onClick={handleRemoveAllRequests}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
-            >
-              Remove All Requests
-            </button>
+        ) : requests.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+            <FiBell className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No active requests</h3>
+            <p className="text-sm text-gray-500">Tables will appear here when they call for service</p>
           </div>
-          <ul className="divide-y divide-gray-100">
-            {filteredRequests
-              .slice()
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {requests
               .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-              .map((request) => (
-                <li key={request.id} className="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <FiBell className="h-6 w-6 text-gray-500" />
-                      </div>
-                      <div>
-                        <p className="text-base font-medium text-gray-800">Table {request.tableNumber}</p>
-                        <p className="text-sm text-gray-500">
-                          Called at: {new Date(request.createdAt).toLocaleString()}
-                        </p>
-                      </div>
+              .map(request => (
+                <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-800">Table {request.tableNumber}</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(request.createdAt).toLocaleTimeString()}
+                      </p>
                     </div>
                     <button
                       onClick={() => handleClearRequest(request.id)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                       title="Clear request"
                     >
                       <FiTrash2 className="h-5 w-5" />
                     </button>
                   </div>
-                </li>
+                </div>
               ))}
-          </ul>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

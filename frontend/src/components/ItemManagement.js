@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { FiTag, FiDollarSign, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck } from 'react-icons/fi';
+import { FiTag, FiDollarSign, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -171,13 +171,14 @@ function ItemManagement() {
   }, [loadItems, loadCategoriesForItems]);
 
   return (
-    <div id="items-section" className="mb-16">
+    <div id="items-section" className="mb-16 px-4 sm:px-0">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
         Menu Items
         <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </span>
       </h1>
+
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -243,24 +244,39 @@ function ItemManagement() {
               </div>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Item Image (optional)</label>
-              <input
-                type="file"
-                accept="image/jpeg,image/jpg,image/png"
-                onChange={(e) => setItemImage(e.target.files[0])}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              {editingItem && editingItem.image && !itemImage && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500">Current image:</p>
-                  <img
-                    src={`${BASE_URL}${editingItem.image}?t=${new Date().getTime()}`}
-                    alt="Current item"
-                    className="mt-1 h-16 w-16 object-cover rounded-lg"
-                    onError={(e) => console.error(`Failed to load current image for editing: ${BASE_URL}${editingItem.image}`)}
+              <label className="block text-sm font-medium text-gray-600 mb-1">Item Image</label>
+              <div className="flex items-center space-x-4">
+                <label className="flex flex-col items-center justify-center w-full max-w-xs p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  {itemImage ? (
+                    <img 
+                      src={URL.createObjectURL(itemImage)} 
+                      alt="Preview" 
+                      className="h-16 w-16 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <FiImage className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500">Click to upload</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setItemImage(e.target.files[0])}
+                    className="hidden"
                   />
-                </div>
-              )}
+                </label>
+                {editingItem?.image && !itemImage && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm text-gray-500 mb-1">Current Image</p>
+                    <img
+                      src={`${BASE_URL}${editingItem.image}`}
+                      alt="Current"
+                      className="h-16 w-16 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-3">
               <button
@@ -294,6 +310,7 @@ function ItemManagement() {
           </form>
         </div>
       </div>
+
       {errorItems && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
           <div className="flex">
@@ -308,6 +325,7 @@ function ItemManagement() {
           </div>
         </div>
       )}
+
       {successItems && (
         <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
           <div className="flex">
@@ -322,66 +340,71 @@ function ItemManagement() {
           </div>
         </div>
       )}
+
       {isLoadingItems && items.length === 0 ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-12 w-12" />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-lg mb-3"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            </div>
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No items</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding your first menu item.</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No items yet</h3>
+          <p className="mt-1 text-sm text-gray-500">Add your first menu item to get started</p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-gray-100">
-          <ul className="divide-y divide-gray-100">
-            {items.map((item) => (
-              <li key={item.id} className="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {item.image ? (
-                      <img
-                        src={`${BASE_URL}${item.image}?t=${new Date().getTime()}`}
-                        alt={item.name}
-                        className="h-12 w-12 object-cover rounded-lg"
-                        onError={(e) => console.error(`Failed to load image for ${item.name}: ${BASE_URL}${item.image}`)}
-                      />
-                    ) : (
-                      <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-500 text-sm">No Image</span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-base font-medium text-gray-800">{item.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {item.categorie} • {item.price} DT
-                      </p>
-                    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item) => (
+            <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="relative h-48 bg-gray-100">
+                {item.image ? (
+                  <img
+                    src={`${BASE_URL}${item.image}`}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYWFhYWEiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <FiImage className="h-12 w-12 text-gray-400" />
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => startEditingItem(item)}
-                      className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                      title="Edit"
-                    >
-                      <FiEdit2 className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => deleteItem(item.id)}
-                      className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Delete"
-                    >
-                      <FiTrash2 className="h-5 w-5" />
-                    </button>
-                  </div>
+                )}
+                <div className="absolute top-2 right-2 flex space-x-1">
+                  <button
+                    onClick={() => startEditingItem(item)}
+                    className="p-2 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="Edit"
+                  >
+                    <FiEdit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteItem(item.id)}
+                    className="p-2 bg-white rounded-full shadow-md text-red-600 hover:bg-red-50 transition-colors"
+                    title="Delete"
+                  >
+                    <FiTrash2 className="h-4 w-4" />
+                  </button>
                 </div>
-              </li>
-            ))}
-          </ul>
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-medium text-gray-800 truncate">{item.name}</h3>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-sm text-gray-500">{item.categorie}</span>
+                  <span className="font-medium text-gray-900">{item.price.toFixed(2)} DT</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

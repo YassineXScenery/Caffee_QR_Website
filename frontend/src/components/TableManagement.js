@@ -1,180 +1,184 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiTrash2, FiEdit } from 'react-icons/fi';
+import { FiTrash2 } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:3000/api';
 
 function TableManagement() {
   const [tables, setTables] = useState([]);
-  const [numberOfTables, setNumberOfTables] = useState('');
+  const [numTables, setNumTables] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  useEffect(() => {
-    const fetchTables = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get(`${API_URL}/tables`);
-        setTables(response.data);
-      } catch (error) {
-        console.error('Error fetching tables:', error);
-        setError(error.response?.data?.error || 'Failed to load tables');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTables();
-  }, []);
-
-  const handleCreateTables = async (e) => {
-    e.preventDefault();
-    if (!numberOfTables || isNaN(numberOfTables) || numberOfTables < 1 || numberOfTables > 100) {
-      setError('Please enter a valid number of tables (1-100)');
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
+  const loadTables = async () => {
     setIsLoading(true);
-
     try {
-      const response = await axios.post(`${API_URL}/tables`, { numberOfTables: parseInt(numberOfTables) });
-      setSuccess(response.data.message);
-      setNumberOfTables('');
-      // Refresh the table list
-      const tablesResponse = await axios.get(`${API_URL}/tables`);
-      setTables(tablesResponse.data);
-    } catch (error) {
-      console.error('Error creating tables:', error);
-      setError(error.response?.data?.error || 'Failed to create tables');
+      const response = await axios.get(`${API_URL}/tables`);
+      setTables(response.data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load tables');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteTable = async (tableNumber) => {
+  const createTables = async (e) => {
+    e.preventDefault();
+    const number = parseInt(numTables);
+    
+    if (!number || number < 1 || number > 100) {
+      setError('Please enter a valid number (1-100)');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
     try {
-      await axios.delete(`${API_URL}/tables/${tableNumber}`);
-      setTables((prev) => prev.filter((table) => table.table_number !== tableNumber));
-    } catch (error) {
-      console.error('Error deleting table:', error);
-      setError(error.response?.data?.error || 'Failed to delete table');
+      await axios.post(`${API_URL}/tables`, { numberOfTables: number });
+      setSuccess(`${number} tables created successfully`);
+      setNumTables('');
+      await loadTables();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to create tables');
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setSuccess(null), 3000);
     }
   };
 
-  const handleRemoveAllTables = async () => {
+  const deleteTable = async (tableNumber) => {
+    try {
+      await axios.delete(`${API_URL}/tables/${tableNumber}`);
+      setTables(prev => prev.filter(t => t.table_number !== tableNumber));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete table');
+    }
+  };
+
+  const deleteAllTables = async () => {
+    if (!window.confirm('Delete ALL tables?')) return;
     try {
       await axios.delete(`${API_URL}/tables`);
       setTables([]);
-      setSuccess('All tables removed successfully');
-    } catch (error) {
-      console.error('Error removing all tables:', error);
-      setError(error.response?.data?.error || 'Failed to remove all tables');
+      setSuccess('All tables deleted');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete tables');
     }
   };
 
+  useEffect(() => {
+    loadTables();
+  }, []);
+
   return (
-    <div id="tables-section" className="mb-16">
-      {/* Create Table Form */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6">Tables</h1>
-        <div className="flex gap-4 max-w-md items-end">
-          <div className="flex-1">
-            <label htmlFor="numberOfTables" className="block text-sm font-medium text-gray-600 mb-1">
-              # Enter number of tables (1-100)
-            </label>
-            <input
-              type="number"
-              id="numberOfTables"
-              value={numberOfTables}
-              onChange={(e) => setNumberOfTables(e.target.value)}
-              placeholder="Enter number of tables"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              min="1"
-              max="100"
+    <div id="tables-section" className="mb-16 px-4 sm:px-0">
+      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Table Management</h1>
+      
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
+        <div className="p-6">
+          <h2 className="text-lg font-medium text-gray-800 mb-4">Create Tables</h2>
+          <form onSubmit={createTables} className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="w-full sm:w-auto">
+              <label htmlFor="numTables" className="block text-sm font-medium text-gray-600 mb-1">
+                Number of Tables (1-100)
+              </label>
+              <input
+                type="number"
+                id="numTables"
+                value={numTables}
+                onChange={(e) => setNumTables(e.target.value)}
+                min="1"
+                max="100"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={isLoading}
+              />
+            </div>
+            <button
+              type="submit"
               disabled={isLoading}
-            />
-          </div>
-          <button
-            type="submit"
-            onClick={handleCreateTables}
-            className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Creating...' : 'Create Table'}
-          </button>
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
+            >
+              {isLoading ? 'Creating...' : 'Create Tables'}
+            </button>
+          </form>
         </div>
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg max-w-md">
-            <p className="text-sm text-red-700">{error}</p>
+      </div>
+
+      {/* Messages */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm text-red-600">{error}</p>
           </div>
-        )}
-        {success && (
-          <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md">
+        </div>
+      )}
+      {success && (
+        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
             <p className="text-sm text-green-600">{success}</p>
           </div>
+        </div>
+      )}
+
+      {/* Tables List */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-medium text-gray-800">
+          Current Tables: {tables.length}
+        </h2>
+        {tables.length > 0 && (
+          <button
+            onClick={deleteAllTables}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+          >
+            Delete All
+          </button>
         )}
       </div>
 
-      {/* Table List */}
       {isLoading && tables.length === 0 ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-12 w-12"></div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
         </div>
       ) : tables.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No tables</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating your tables.</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No tables created</h3>
+          <p className="mt-1 text-sm text-gray-500">Create tables using the form above</p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-gray-100">
-          <div className="flex justify-end p-4">
-            <button
-              onClick={handleRemoveAllTables}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
-            >
-              Remove All Tables
-            </button>
-          </div>
-          <ul className="divide-y divide-gray-100">
-            {tables.map((table) => (
-              <li key={table.id} className="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500 font-medium">#{table.table_number}</span>
-                    </div>
-                    <div>
-                      <p className="text-base font-medium text-gray-800">Table ID: {table.table_number}</p>
-                    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tables.map(table => (
+            <div key={table.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                    <span className="font-medium text-gray-700">#{table.table_number}</span>
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit table"
-                    >
-                      <FiEdit className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTable(table.table_number)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete table"
-                    >
-                      <FiTrash2 className="h-5 w-5" />
-                    </button>
-                  </div>
+                  <span className="text-gray-800">Table {table.table_number}</span>
                 </div>
-              </li>
-            ))}
-          </ul>
+                <button
+                  onClick={() => deleteTable(table.table_number)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                  title="Delete table"
+                >
+                  <FiTrash2 className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
