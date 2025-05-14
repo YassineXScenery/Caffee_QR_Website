@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiTrash2 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 
 function TableManagement() {
+  const { t } = useTranslation();
   const [tables, setTables] = useState([]);
   const [numTables, setNumTables] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +19,7 @@ function TableManagement() {
       const response = await axios.get(`${API_URL}/tables`);
       setTables(response.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load tables');
+      setError(err.response?.data?.error || t('failedToLoadTables'));
     } finally {
       setIsLoading(false);
     }
@@ -28,7 +30,7 @@ function TableManagement() {
     const number = parseInt(numTables);
     
     if (!number || number < 1 || number > 100) {
-      setError('Please enter a valid number (1-100)');
+      setError(t('enterValidTableNumber'));
       return;
     }
 
@@ -36,11 +38,11 @@ function TableManagement() {
     setError(null);
     try {
       await axios.post(`${API_URL}/tables`, { numberOfTables: number });
-      setSuccess(`${number} tables created successfully`);
+      setSuccess(t('tablesCreatedSuccess', { count: number }));
       setNumTables('');
       await loadTables();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create tables');
+      setError(err.response?.data?.error || t('failedToCreateTables'));
     } finally {
       setIsLoading(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -52,18 +54,18 @@ function TableManagement() {
       await axios.delete(`${API_URL}/tables/${tableNumber}`);
       setTables(prev => prev.filter(t => t.table_number !== tableNumber));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete table');
+      setError(err.response?.data?.error || t('failedToDeleteTable'));
     }
   };
 
   const deleteAllTables = async () => {
-    if (!window.confirm('Delete ALL tables?')) return;
+    if (!window.confirm(t('confirmDeleteAllTables'))) return;
     try {
       await axios.delete(`${API_URL}/tables`);
       setTables([]);
-      setSuccess('All tables deleted');
+      setSuccess(t('allTablesDeleted'));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete tables');
+      setError(err.response?.data?.error || t('failedToDeleteTables'));
     }
   };
 
@@ -73,15 +75,15 @@ function TableManagement() {
 
   return (
     <div id="tables-section" className="mb-16 px-4 sm:px-0">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Table Management</h1>
+      <h1 className="text-2xl font-semibold text-gray-800 mb-6">{t('tableManagement')}</h1>
       
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">Create Tables</h2>
+          <h2 className="text-lg font-medium text-gray-800 mb-4">{t('createTables')}</h2>
           <form onSubmit={createTables} className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="w-full sm:w-auto">
               <label htmlFor="numTables" className="block text-sm font-medium text-gray-600 mb-1">
-                Number of Tables (1-100)
+                {t('numberOfTables')}
               </label>
               <input
                 type="number"
@@ -99,13 +101,12 @@ function TableManagement() {
               disabled={isLoading}
               className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
             >
-              {isLoading ? 'Creating...' : 'Create Tables'}
+              {isLoading ? t('creating') : t('createTables')}
             </button>
           </form>
         </div>
       </div>
 
-      {/* Messages */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
           <div className="flex items-center">
@@ -127,17 +128,16 @@ function TableManagement() {
         </div>
       )}
 
-      {/* Tables List */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium text-gray-800">
-          Current Tables: {tables.length}
+          {t('currentTables', { count: tables.length })}
         </h2>
         {tables.length > 0 && (
           <button
             onClick={deleteAllTables}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
           >
-            Delete All
+            {t('deleteAll')}
           </button>
         )}
       </div>
@@ -155,8 +155,8 @@ function TableManagement() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No tables created</h3>
-          <p className="mt-1 text-sm text-gray-500">Create tables using the form above</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('noTablesCreated')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('createTablesPrompt')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -167,12 +167,12 @@ function TableManagement() {
                   <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
                     <span className="font-medium text-gray-700">#{table.table_number}</span>
                   </div>
-                  <span className="text-gray-800">Table {table.table_number}</span>
+                  <span className="text-gray-800">{t('table')} {table.table_number}</span>
                 </div>
                 <button
                   onClick={() => deleteTable(table.table_number)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                  title="Delete table"
+                  title={t('deleteTable')}
                 >
                   <FiTrash2 className="h-5 w-5" />
                 </button>

@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FiTag, FiDollarSign, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
 function ItemManagement() {
+  const { t, i18n } = useTranslation();
   const [items, setItems] = useState([]);
   const [categoriesForItems, setCategoriesForItems] = useState([]);
   const [itemName, setItemName] = useState('');
@@ -32,7 +34,7 @@ function ItemManagement() {
       setItems(response.data);
     } catch (error) {
       console.error('Error loading items:', error);
-      setErrorItems(error.response?.data?.error || 'Failed to load items');
+      setErrorItems(error.response?.data?.error || t('failedToLoadItems'));
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -40,7 +42,7 @@ function ItemManagement() {
     } finally {
       setIsLoadingItems(false);
     }
-  }, []);
+  }, [t]);
 
   const loadCategoriesForItems = useCallback(async () => {
     try {
@@ -54,23 +56,23 @@ function ItemManagement() {
       }
     } catch (error) {
       console.error('Error loading categories:', error);
-      setErrorItems(error.response?.data?.error || 'Failed to load categories');
+      setErrorItems(error.response?.data?.error || t('failedToLoadCategories'));
     }
-  }, [categoryId]);
+  }, [categoryId, t]);
 
   const handleSubmitItem = async (e) => {
     e.preventDefault();
     const parsedPrice = parseFloat(price);
     if (!itemName.trim()) {
-      setErrorItems('Please enter an item name');
+      setErrorItems(t('enterItemName'));
       return;
     }
     if (!categoryId) {
-      setErrorItems('Please select a category');
+      setErrorItems(t('selectCategory'));
       return;
     }
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      setErrorItems('Please enter a valid price');
+      setErrorItems(t('enterValidPrice'));
       return;
     }
 
@@ -96,7 +98,7 @@ function ItemManagement() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setSuccessItems('Item updated successfully!');
+        setSuccessItems(t('itemUpdated'));
       } else {
         await axios.post(`${API_URL}/items`, formData, {
           headers: {
@@ -104,13 +106,13 @@ function ItemManagement() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setSuccessItems('Item added successfully!');
+        setSuccessItems(t('itemAdded'));
       }
       resetItemForm();
       loadItems();
     } catch (error) {
       console.error('Error saving item:', error);
-      setErrorItems(error.response?.data?.error || 'Failed to save item');
+      setErrorItems(error.response?.data?.error || t('failedToSaveItem'));
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -122,10 +124,7 @@ function ItemManagement() {
   };
 
   const deleteItem = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) {
-      return;
-    }
-
+    if (!window.confirm(t('confirmDeleteItem'))) return;
     setIsLoadingItems(true);
     setErrorItems(null);
     try {
@@ -133,11 +132,11 @@ function ItemManagement() {
       await axios.delete(`${API_URL}/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccessItems('Item deleted successfully!');
+      setSuccessItems(t('itemDeleted'));
       loadItems();
     } catch (error) {
       console.error('Error deleting item:', error);
-      setErrorItems(error.response?.data?.error || 'Failed to delete item');
+      setErrorItems(error.response?.data?.error || t('failedToDeleteItem'));
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -171,24 +170,24 @@ function ItemManagement() {
   }, [loadItems, loadCategoriesForItems]);
 
   return (
-    <div id="items-section" className="mb-16 px-4 sm:px-0">
+    <div id="items-section" className="mb-16 px-4 sm:px-0" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-        Menu Items
+        {t('menuItems')}
         <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-          {items.length} {items.length === 1 ? 'item' : 'items'}
+          {items.length} {items.length === 1 ? t('item') : t('items')}
         </span>
       </h1>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
-            {editingItem ? 'Edit Item' : 'Add New Item'}
+            {editingItem ? t('editItem') : t('addNewItem')}
           </h2>
           <form onSubmit={handleSubmitItem}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div>
                 <label htmlFor="itemName" className="block text-sm font-medium text-gray-600 mb-1">
-                  Item Name
+                  {t('itemName')}
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -199,14 +198,14 @@ function ItemManagement() {
                     id="itemName"
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
-                    placeholder="Enter item name"
+                    placeholder={t('enterItemNamePlaceholder')}
                     className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
               </div>
               <div>
                 <label htmlFor="category" className="block text-sm font-medium text-gray-600 mb-1">
-                  Category
+                  {t('category')}
                 </label>
                 <select
                   id="category"
@@ -214,7 +213,7 @@ function ItemManagement() {
                   onChange={(e) => setCategoryId(e.target.value)}
                   className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 >
-                  <option value="">Select Category</option>
+                  <option value="">{t('selectCategory')}</option>
                   {categoriesForItems.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.categorie}
@@ -224,7 +223,7 @@ function ItemManagement() {
               </div>
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-600 mb-1">
-                  Price (DT)
+                  {t('price')} (DT)
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -235,7 +234,7 @@ function ItemManagement() {
                     id="price"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="0.00"
+                    placeholder={t('enterPricePlaceholder')}
                     step="0.01"
                     min="0"
                     className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
@@ -244,19 +243,19 @@ function ItemManagement() {
               </div>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Item Image</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">{t('itemImage')}</label>
               <div className="flex items-center space-x-4">
                 <label className="flex flex-col items-center justify-center w-full max-w-xs p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                   {itemImage ? (
                     <img 
                       src={URL.createObjectURL(itemImage)} 
-                      alt="Preview" 
+                      alt={t('preview')} 
                       className="h-16 w-16 object-cover rounded-lg"
                     />
                   ) : (
                     <div className="flex flex-col items-center">
                       <FiImage className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Click to upload</span>
+                      <span className="text-sm text-gray-500">{t('clickToUpload')}</span>
                     </div>
                   )}
                   <input
@@ -268,10 +267,10 @@ function ItemManagement() {
                 </label>
                 {editingItem?.image && !itemImage && (
                   <div className="flex flex-col items-center">
-                    <p className="text-sm text-gray-500 mb-1">Current Image</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('currentImage')}</p>
                     <img
                       src={`${BASE_URL}${editingItem.image}`}
-                      alt="Current"
+                      alt={t('currentImageAlt')}
                       className="h-16 w-16 object-cover rounded-lg border border-gray-200"
                     />
                   </div>
@@ -294,7 +293,7 @@ function ItemManagement() {
                 ) : (
                   <FiPlus className="mr-1" />
                 )}
-                {isLoadingItems ? 'Processing...' : editingItem ? 'Update Item' : 'Add Item'}
+                {isLoadingItems ? t('processing') : editingItem ? t('update') : t('add')}
               </button>
               {editingItem && (
                 <button
@@ -303,7 +302,7 @@ function ItemManagement() {
                   className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors text-sm font-medium"
                 >
                   <FiX className="inline mr-1" />
-                  Cancel
+                  {t('cancel')}
                 </button>
               )}
             </div>
@@ -316,7 +315,7 @@ function ItemManagement() {
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
@@ -356,8 +355,8 @@ function ItemManagement() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No items yet</h3>
-          <p className="mt-1 text-sm text-gray-500">Add your first menu item to get started</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('noItems')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('addFirstItem')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -383,14 +382,14 @@ function ItemManagement() {
                   <button
                     onClick={() => startEditingItem(item)}
                     className="p-1.5 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Edit"
+                    title={t('edit')}
                   >
                     <FiEdit2 className="h-3 w-3" />
                   </button>
                   <button
                     onClick={() => deleteItem(item.id)}
                     className="p-1.5 bg-white rounded-full shadow-md text-red-600 hover:bg-red-50 transition-colors"
-                    title="Delete"
+                    title={t('delete')}
                   >
                     <FiTrash2 className="h-3 w-3" />
                   </button>
@@ -400,7 +399,10 @@ function ItemManagement() {
                 <h3 className="text-sm font-medium text-gray-800 truncate">{item.name}</h3>
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-xs text-gray-500">{item.categorie}</span>
-                  <span className="text-sm font-medium text-gray-900">{item.price.toFixed(2)} DT</span>
+                  <div className="flex items-center">
+                    <span className="font-bold">{item.price.toFixed(2)}</span>
+                    <span className="ml-1 text-blue-500 font-medium">DT</span>
+                  </div>
                 </div>
               </div>
             </div>

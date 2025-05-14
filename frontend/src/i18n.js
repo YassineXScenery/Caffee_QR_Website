@@ -1,0 +1,491 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+const resources = {
+  en: {
+    translation: {
+      // General
+      settings: 'Settings',
+      beta: 'Beta',
+      languageSettings: 'Language Settings',
+      selectLanguage: 'Select Language',
+      english: 'English',
+      french: 'French',
+      arabic: 'Arabic',
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      edit: 'Edit',
+      update: 'Update',
+      add: 'Add',
+      loading: 'Loading...',
+      noData: 'No data available',
+      success: 'Success!',
+      error: 'Error',
+      confirm: 'Are you sure?',
+      clearAll: 'Clear All',
+      deleteAll: 'Delete All',
+      clickToUpload: 'Click to upload',
+      preview: 'Preview',
+      currentImage: 'Current Image',
+      currentImageAlt: 'Current',
+      dt: 'DT',
+      cafeMenuTitle: 'Cafe Menu',
+      manageCafeMenuTitle: 'Manage Cafe Menu',
+      viewPublicMenu: 'View Public Menu',
+
+      // Placeholders
+      enterCategoryNamePlaceholder: 'Enter category name',
+      enterItemNamePlaceholder: 'Enter item name',
+      enterPricePlaceholder: 'Enter price',
+
+      // Admin Panel
+      adminPanel: 'Cafe Admin Panel',
+      adminAccounts: 'Admin Accounts',
+      categories: 'Categories',
+      menuItems: 'Menu Items',
+      tables: 'Tables',
+      waiterCalls: 'Waiter Calls',
+      customerFeedback: 'Customer Feedback',
+      logout: 'Logout',
+
+      // Admin Management
+      addNewAdmin: 'Add New Admin',
+      editAdmin: 'Edit Admin',
+      username: 'Username',
+      password: 'Password',
+      enterUsername: 'Enter username',
+      enterPassword: 'Enter password',
+      adminDeleted: 'Admin deleted successfully!',
+      adminAdded: 'Admin added successfully!',
+      adminUpdated: 'Admin updated successfully!',
+      confirmDeleteAdmin: 'Are you sure you want to delete this admin?',
+      adminAccount: 'Admin account',
+
+      // Category Management
+      addNewCategory: 'Add New Category',
+      editCategory: 'Edit Category',
+      categoryName: 'Category Name',
+      categoryImage: 'Category Image',
+      enterCategoryName: 'Enter category name',
+      categoryDeleted: 'Category deleted successfully!',
+      categoryAdded: 'Category added successfully!',
+      categoryUpdated: 'Category updated successfully!',
+      confirmDeleteCategory: 'Are you sure you want to delete this category? All associated items will also be deleted.',
+      noImage: 'No Image',
+
+      // Item Management
+      addNewItem: 'Add New Item',
+      editItem: 'Edit Item',
+      itemName: 'Item Name',
+      itemPrice: 'Item Price',
+      selectCategory: 'Select Category',
+      enterItemName: 'Enter item name',
+      enterItemPrice: 'Enter item price',
+      itemDeleted: 'Item deleted successfully!',
+      itemAdded: 'Item added successfully!',
+      itemUpdated: 'Item updated successfully!',
+      confirmDeleteItem: 'Are you sure you want to delete this item?',
+
+      // Table Management
+      tableManagement: 'Table Management',
+      currentTables: 'Current Tables: {{count}}',
+      createTables: 'Create Tables',
+      numberOfTables: 'Number of Tables',
+      enterNumberOfTables: 'Enter number of tables',
+      tablesCreated: 'Tables created successfully!',
+      createTablesError: 'Error creating tables',
+      noTablesYet: 'No tables created yet',
+
+      // Waiter Calls
+      noActiveRequests: 'No active requests',
+      requestsWillAppear: 'Tables will appear here when they call for service',
+      tableCalledWaiter: 'Table {{number}} called for service',
+      clearRequest: 'Clear request',
+      callTime: 'Called at {{time}}',
+
+      // Feedback Management
+      noFeedbackYet: 'No feedback yet',
+      feedbackWillAppear: 'Customer feedback will appear here',
+      clearAllFeedback: 'Clear All',
+      feedbackTime: 'Submitted at {{time}}',
+      confirmClearFeedback: 'Are you sure you want to delete all feedback?',
+      deleteFeedback: 'Delete feedback',
+
+      // Notifications
+      notifications: 'Notifications',
+      noNotifications: 'No notifications',
+      markAllAsRead: 'Mark all as read',
+      markAsRead: 'Mark as read',
+      clearAll: 'Clear all',
+      close: 'Close',
+      newFeedback: 'New feedback received',
+      newWaiterCall: 'New waiter call',
+
+      // Admin Login
+      adminLogin: 'Admin Login',
+      enterCredentials: 'Enter your credentials',
+      login: 'Login',
+      backToMenu: 'Back to Menu',
+
+      // Menu Display & Waiter Dialog
+      callWaiterDialogTitle: 'Call Waiter',
+      tableNumber: 'Table Number',
+      tableNumberPlaceholder: 'Enter your table number',
+      submit: 'Submit',
+      feedbackTitle: 'We value your feedback',
+      shareYourThoughtsPlaceholder: 'Share your thoughts or suggestions...',
+      submitFeedback: 'Submit Feedback',
+      callWaiter: 'Call Waiter',
+      callWaiterCooldown: 'Please wait {{time}}s before calling again',
+      menuTitle: 'Our Menu',
+      menuSubtitle: 'Browse our delicious offerings below.',
+      waiterCalledFromTable: 'Waiter called from table {{number}}',
+
+      // Plural and count-based UI
+      adminsCount: '{{count}} admin',
+      adminsCount_plural: '{{count}} admins',
+      itemsCount: '{{count}} item',
+      itemsCount_plural: '{{count}} items',
+      requestsCount: '{{count}} request',
+      requestsCount_plural: '{{count}} requests',
+      entriesCount: '{{count}} entry',
+      entriesCount_plural: '{{count}} entries',
+      menuCategories: 'Menu Categories',
+      requests: 'Requests',
+      entries: 'Entries',
+    }
+  },
+  fr: {
+    translation: {
+      // General
+      settings: 'Paramètres',
+      beta: 'Bêta',
+      languageSettings: 'Paramètres de langue',
+      selectLanguage: 'Sélectionner la langue',
+      english: 'Anglais',
+      french: 'Français',
+      arabic: 'Arabe',
+      save: 'Enregistrer',
+      cancel: 'Annuler',
+      delete: 'Supprimer',
+      edit: 'Modifier',
+      update: 'Mettre à jour',
+      add: 'Ajouter',
+      loading: 'Chargement...',
+      noData: 'Aucune donnée disponible',
+      success: 'Succès !',
+      error: 'Erreur',
+      confirm: 'Êtes-vous sûr ?',
+      clearAll: 'Tout effacer',
+      deleteAll: 'Tout supprimer',
+      clickToUpload: 'Cliquez pour télécharger',
+      preview: 'Aperçu',
+      currentImage: 'Image actuelle',
+      currentImageAlt: 'Actuelle',
+      dt: 'DT',
+      cafeMenuTitle: 'Menu du Café',
+      manageCafeMenuTitle: 'Gérer le Menu du Café',
+      viewPublicMenu: 'Voir le Menu Public',
+
+      // Placeholders
+      enterCategoryNamePlaceholder: 'Entrez le nom de la catégorie',
+      enterItemNamePlaceholder: 'Entrez le nom de l\'article',
+      enterPricePlaceholder: 'Entrez le prix',
+
+      // Admin Panel
+      adminPanel: 'Panneau d\'administration du café',
+      adminAccounts: 'Comptes administrateurs',
+      categories: 'Catégories',
+      menuItems: 'Articles du menu',
+      tables: 'Tables',
+      waiterCalls: 'Appels serveur',
+      customerFeedback: 'Avis clients',
+      logout: 'Déconnexion',
+
+      // Admin Management
+      addNewAdmin: 'Ajouter un nouvel administrateur',
+      editAdmin: 'Modifier l\'administrateur',
+      username: 'Nom d\'utilisateur',
+      password: 'Mot de passe',
+      enterUsername: 'Entrer le nom d\'utilisateur',
+      enterPassword: 'Entrer le mot de passe',
+      adminDeleted: 'Administrateur supprimé avec succès !',
+      adminAdded: 'Administrateur ajouté avec succès !',
+      adminUpdated: 'Administrateur mis à jour avec succès !',
+      confirmDeleteAdmin: 'Êtes-vous sûr de vouloir supprimer cet administrateur ?',
+      adminAccount: 'Compte administrateur',
+
+      // Category Management
+      addNewCategory: 'Ajouter une nouvelle catégorie',
+      editCategory: 'Modifier la catégorie',
+      categoryName: 'Nom de la catégorie',
+      categoryImage: 'Image de la catégorie',
+      enterCategoryName: 'Entrer le nom de la catégorie',
+      categoryDeleted: 'Catégorie supprimée avec succès !',
+      categoryAdded: 'Catégorie ajoutée avec succès !',
+      categoryUpdated: 'Catégorie mise à jour avec succès !',
+      confirmDeleteCategory: 'Êtes-vous sûr de vouloir supprimer cette catégorie ? Tous les articles associés seront également supprimés.',
+      noImage: 'Pas d\'image',
+
+      // Item Management
+      addNewItem: 'Ajouter un nouvel article',
+      editItem: 'Modifier l\'article',
+      itemName: 'Nom de l\'article',
+      itemPrice: 'Prix de l\'article',
+      selectCategory: 'Sélectionner une catégorie',
+      enterItemName: 'Entrer le nom de l\'article',
+      enterItemPrice: 'Entrer le prix de l\'article',
+      itemDeleted: 'Article supprimé avec succès !',
+      itemAdded: 'Article ajouté avec succès !',
+      itemUpdated: 'Article mis à jour avec succès !',
+      confirmDeleteItem: 'Êtes-vous sûr de vouloir supprimer cet article ?',
+
+      // Table Management
+      tableManagement: 'Gestion des tables',
+      currentTables: 'Tables actuelles : {{count}}',
+      createTables: 'Créer des tables',
+      numberOfTables: 'Nombre de tables',
+      enterNumberOfTables: 'Entrer le nombre de tables',
+      tablesCreated: 'Tables créées avec succès !',
+      createTablesError: 'Erreur lors de la création des tables',
+      noTablesYet: 'Aucune table créée pour le moment',
+
+      // Waiter Calls
+      noActiveRequests: 'Aucune demande active',
+      requestsWillAppear: 'Les tables apparaîtront ici quand elles appelleront un serveur',
+      tableCalledWaiter: 'La table {{number}} a appelé un serveur',
+      clearRequest: 'Effacer la demande',
+      callTime: 'Appelé à {{time}}',
+
+      // Feedback Management
+      noFeedbackYet: 'Aucun avis pour le moment',
+      feedbackWillAppear: 'Les avis clients apparaîtront ici',
+      clearAllFeedback: 'Tout effacer',
+      feedbackTime: 'Soumis à {{time}}',
+      confirmClearFeedback: 'Êtes-vous sûr de vouloir supprimer tous les avis ?',
+      deleteFeedback: 'Supprimer l\'avis',
+
+      // Notifications
+      notifications: 'Notifications',
+      noNotifications: 'Aucune notification',
+      markAllAsRead: 'Tout marquer comme lu',
+      markAsRead: 'Marquer comme lu',
+      clearAll: 'Tout effacer',
+      close: 'Fermer',
+      newFeedback: 'Nouvel avis reçu',
+      newWaiterCall: 'Nouvel appel serveur',
+
+      // Admin Login
+      adminLogin: 'Connexion Administrateur',
+      enterCredentials: 'Entrez vos identifiants',
+      login: 'Connexion',
+      backToMenu: 'Retour au Menu',
+
+      // Menu Display & Waiter Dialog
+      callWaiterDialogTitle: 'Appeler le serveur',
+      tableNumber: 'Numéro de table',
+      tableNumberPlaceholder: 'Entrez votre numéro de table',
+      submit: 'Soumettre',
+      feedbackTitle: 'Nous apprécions vos retours',
+      shareYourThoughtsPlaceholder: 'Partagez vos idées ou suggestions...',
+      submitFeedback: 'Envoyer le retour',
+      callWaiter: 'Appeler le serveur',
+      callWaiterCooldown: 'Veuillez patienter {{time}}s avant de rappeler',
+      menuTitle: 'Notre menu',
+      menuSubtitle: 'Découvrez nos délicieuses offres ci-dessous.',
+      waiterCalledFromTable: 'Serveur appelé depuis la table {{number}}',
+
+      // Plural and count-based UI
+      adminsCount: '{{count}} administrateur',
+      adminsCount_plural: '{{count}} administrateurs',
+      itemsCount: '{{count}} article',
+      itemsCount_plural: '{{count}} articles',
+      requestsCount: '{{count}} demande',
+      requestsCount_plural: '{{count}} demandes',
+      entriesCount: '{{count}} entrée',
+      entriesCount_plural: '{{count}} entrées',
+      menuCategories: 'Catégories du menu',
+      requests: 'Demandes',
+      entries: 'Entrées',
+      category: 'Catégorie',
+      price: 'Prix (DT)',
+      itemImage: "Image de l'article",
+    }
+  },
+  ar: {
+    translation: {
+      // General
+      settings: 'الإعدادات',
+      beta: 'تجريبي',
+      languageSettings: 'إعدادات اللغة',
+      selectLanguage: 'اختر اللغة',
+      english: 'الإنجليزية',
+      french: 'الفرنسية',
+      arabic: 'العربية',
+      save: 'حفظ',
+      cancel: 'إلغاء',
+      delete: 'حذف',
+      edit: 'تعديل',
+      update: 'تحديث',
+      add: 'إضافة',
+      loading: 'جارٍ التحميل...',
+      noData: 'لا توجد بيانات',
+      success: 'تم بنجاح!',
+      error: 'خطأ',
+      confirm: 'هل أنت متأكد؟',
+      clearAll: 'مسح الكل',
+      deleteAll: 'حذف الكل',
+      clickToUpload: 'انقر للتحميل',
+      preview: 'معاينة',
+      currentImage: 'الصورة الحالية',
+      currentImageAlt: 'الحالية',
+      dt: 'دينار',
+      cafeMenuTitle: 'قائمة المقهى',
+      manageCafeMenuTitle: 'إدارة قائمة المقهى',
+      viewPublicMenu: 'عرض القائمة العامة',
+
+      // Placeholders
+      enterCategoryNamePlaceholder: 'أدخل اسم التصنيف',
+      enterItemNamePlaceholder: 'أدخل اسم العنصر',
+      enterPricePlaceholder: 'أدخل السعر',
+
+      // Admin Panel
+      adminPanel: 'لوحة إدارة المقهى',
+      adminAccounts: 'حسابات المشرفين',
+      categories: 'التصنيفات',
+      menuItems: 'عناصر القائمة',
+      tables: 'الطاولات',
+      waiterCalls: 'نداءات النادل',
+      customerFeedback: 'آراء العملاء',
+      logout: 'تسجيل الخروج',
+
+      // Admin Management
+      addNewAdmin: 'إضافة مشرف جديد',
+      editAdmin: 'تعديل المشرف',
+      username: 'اسم المستخدم',
+      password: 'كلمة المرور',
+      enterUsername: 'أدخل اسم المستخدم',
+      enterPassword: 'أدخل كلمة المرور',
+      adminDeleted: 'تم حذف المشرف بنجاح!',
+      adminAdded: 'تم إضافة المشرف بنجاح!',
+      adminUpdated: 'تم تحديث المشرف بنجاح!',
+      confirmDeleteAdmin: 'هل أنت متأكد من حذف هذا المشرف؟',
+      adminAccount: 'حساب المشرف',
+
+      // Category Management
+      addNewCategory: 'إضافة تصنيف جديد',
+      editCategory: 'تعديل التصنيف',
+      categoryName: 'اسم التصنيف',
+      categoryImage: 'صورة التصنيف',
+      enterCategoryName: 'أدخل اسم التصنيف',
+      categoryDeleted: 'تم حذف التصنيف بنجاح!',
+      categoryAdded: 'تم إضافة التصنيف بنجاح!',
+      categoryUpdated: 'تم تحديث التصنيف بنجاح!',
+      confirmDeleteCategory: 'هل أنت متأكد من حذف هذا التصنيف؟ سيتم حذف جميع العناصر المرتبطة به أيضاً.',
+      noImage: 'لا توجد صورة',
+
+      // Item Management
+      addNewItem: 'إضافة عنصر جديد',
+      editItem: 'تعديل العنصر',
+      itemName: 'اسم العنصر',
+      itemPrice: 'سعر العنصر',
+      selectCategory: 'اختر التصنيف',
+      enterItemName: 'أدخل اسم العنصر',
+      enterItemPrice: 'أدخل سعر العنصر',
+      itemDeleted: 'تم حذف العنصر بنجاح!',
+      itemAdded: 'تم إضافة العنصر بنجاح!',
+      itemUpdated: 'تم تحديث العنصر بنجاح!',
+      confirmDeleteItem: 'هل أنت متأكد من حذف هذا العنصر؟',
+
+      // Table Management
+      tableManagement: 'إدارة الطاولات',
+      currentTables: 'الطاولات الحالية: {{count}}',
+      createTables: 'إنشاء طاولات',
+      numberOfTables: 'عدد الطاولات',
+      enterNumberOfTables: 'أدخل عدد الطاولات',
+      tablesCreated: 'تم إنشاء الطاولات بنجاح!',
+      createTablesError: 'خطأ في إنشاء الطاولات',
+      noTablesYet: 'لم يتم إنشاء طاولات بعد',
+
+      // Waiter Calls
+      noActiveRequests: 'لا توجد طلبات نشطة',
+      requestsWillAppear: 'ستظهر الطاولات هنا عند طلب النادل',
+      tableCalledWaiter: 'طلبت الطاولة {{number}} النادل',
+      clearRequest: 'مسح الطلب',
+      callTime: 'تم الطلب في {{time}}',
+
+      // Feedback Management
+      noFeedbackYet: 'لا توجد آراء حتى الآن',
+      feedbackWillAppear: 'ستظهر آراء العملاء هنا',
+      clearAllFeedback: 'مسح الكل',
+      feedbackTime: 'تم الإرسال في {{time}}',
+      confirmClearFeedback: 'هل أنت متأكد من حذف جميع الآراء؟',
+      deleteFeedback: 'حذف الرأي',
+
+      // Notifications
+      notifications: 'الإشعارات',
+      noNotifications: 'لا توجد إشعارات',
+      markAllAsRead: 'تعليم الكل كمقروء',
+      markAsRead: 'تعليم كمقروء',
+      clearAll: 'مسح الكل',
+      close: 'إغلاق',
+      newFeedback: 'تم استلام رأي جديد',
+      newWaiterCall: 'طلب نادل جديد',
+
+      // Admin Login
+      adminLogin: 'تسجيل دخول المشرف',
+      enterCredentials: 'أدخل بيانات الاعتماد الخاصة بك',
+      login: 'تسجيل الدخول',
+      backToMenu: 'العودة إلى القائمة',
+
+      // Menu Display & Waiter Dialog
+      callWaiterDialogTitle: 'طلب النادل',
+      tableNumber: 'رقم الطاولة',
+      tableNumberPlaceholder: 'أدخل رقم طاولتك',
+      submit: 'إرسال',
+      feedbackTitle: 'نقدّر ملاحظاتك',
+      shareYourThoughtsPlaceholder: 'شاركنا أفكارك أو اقتراحاتك...',
+      submitFeedback: 'إرسال الملاحظة',
+      callWaiter: 'طلب النادل',
+      callWaiterCooldown: 'يرجى الانتظار {{time}} ثانية قبل الطلب مرة أخرى',
+      menuTitle: 'قائمتنا',
+      menuSubtitle: 'تصفح أشهى أطباقنا أدناه.',
+      waiterCalledFromTable: 'تم طلب النادل من الطاولة {{number}}',
+
+      // Plural and count-based UI
+      adminsCount: '{{count}} مشرف',
+      adminsCount_plural: '{{count}} مشرفين',
+      itemsCount: '{{count}} عنصر',
+      itemsCount_plural: '{{count}} عناصر',
+      requestsCount: '{{count}} طلب',
+      requestsCount_plural: '{{count}} طلبات',
+      entriesCount: '{{count}} إدخال',
+      entriesCount_plural: '{{count}} آراء',
+      menuCategories: 'تصنيفات القائمة',
+      requests: 'الطلبات',
+      entries: 'آراء',
+      category: 'التصنيف',
+      itemImage: 'صورة العنصر',
+      price: 'السعر (دينار)',
+    }
+  }
+};
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      lookupLocalStorage: 'preferredLanguage',
+    },
+  });
+
+export default i18n;

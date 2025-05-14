@@ -3,11 +3,13 @@ import axios from 'axios';
 import { FiChevronDown, FiChevronUp, FiBell } from 'react-icons/fi';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationBell from './NotificationBell';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 
 function MenuDisplay() {
-  // [All existing state declarations remain exactly the same]
+  const { t, i18n } = useTranslation();
+
   const [menu, setMenu] = useState({});
   const [categoryImages, setCategoryImages] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +26,6 @@ function MenuDisplay() {
   const [isCallWaiterDisabled, setIsCallWaiterDisabled] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
 
-  // [All existing useEffect and functions remain exactly the same]
   useEffect(() => {
     const fetchMenu = async () => {
       setIsLoading(true);
@@ -57,7 +58,7 @@ function MenuDisplay() {
         setCategoryStates(initialStates);
       } catch (err) {
         console.error('Error fetching menu:', err);
-        setError(err.response?.data?.error || 'Failed to load menu. Please try again later.');
+        setError(err.response?.data?.error || t('failedToLoadMenu'));
       } finally {
         setIsLoading(false);
       }
@@ -109,11 +110,11 @@ function MenuDisplay() {
     e.preventDefault();
     if (isSubmitting) return;
     if (!feedback.trim()) {
-      setFeedbackError('Please enter your feedback');
+      setFeedbackError(t('enterFeedback'));
       return;
     }
     if (feedback.trim().length > 500) {
-      setFeedbackError('Feedback cannot exceed 500 characters');
+      setFeedbackError(t('feedbackTooLong'));
       return;
     }
 
@@ -123,12 +124,12 @@ function MenuDisplay() {
 
     try {
       await axios.post(`${API_URL}/feedback`, { message: feedback }, { headers: { Authorization: undefined } });
-      setFeedbackSuccess('Thank you for your feedback!');
+      setFeedbackSuccess(t('feedbackSuccess'));
       setFeedback('');
       setTimeout(() => setFeedbackSuccess(null), 3000);
     } catch (err) {
       console.error('Error submitting feedback:', err);
-      setFeedbackError(err.response?.data?.error || 'Failed to submit feedback');
+      setFeedbackError(err.response?.data?.error || t('feedbackError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +139,7 @@ function MenuDisplay() {
     e.preventDefault();
     const parsedTableNumber = parseInt(tableNumber, 10);
     if (!parsedTableNumber || isNaN(parsedTableNumber)) {
-      setCallWaiterError('Please enter a valid table number');
+      setCallWaiterError(t('invalidTableNumber'));
       return;
     }
 
@@ -147,7 +148,7 @@ function MenuDisplay() {
 
     try {
       await axios.post(`${API_URL}/call-waiter`, { tableNumber: parsedTableNumber });
-      setCallWaiterSuccess('Waiter called successfully!');
+      setCallWaiterSuccess(t('waiterCalled'));
       setShowDialog(false);
       setTableNumber('');
       setIsCallWaiterDisabled(true);
@@ -171,21 +172,21 @@ function MenuDisplay() {
       setTimeout(() => setCallWaiterSuccess(null), 3000);
     } catch (err) {
       console.error('Error calling waiter:', err);
-      setCallWaiterError(err.response?.data?.error || 'Failed to call waiter');
+      setCallWaiterError(err.response?.data?.error || t('callWaiterError'));
     }
   };
 
   return (
     <NotificationProvider>
-      <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 bg-blue-50">
+      <div dir={i18n.language === 'ar' ? 'rtl' : 'ltr'} className="flex-1 px-4 sm:px-6 lg:px-8 py-8 bg-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
-              Our Delicious Menu
+              {t('menuTitle')}
             </h1>
             <div className="flex justify-center items-center space-x-4">
               <p className="text-lg text-blue-600 max-w-2xl">
-                Discover our culinary delights, carefully crafted for your enjoyment
+                {t('menuSubtitle')}
               </p>
               {localStorage.getItem('token') && <NotificationBell />}
             </div>
@@ -200,7 +201,7 @@ function MenuDisplay() {
               }`}
             >
               <FiBell className="h-5 w-5 mr-2" />
-              {isCallWaiterDisabled ? `Call Waiter (Wait ${cooldownTime}s)` : 'Call Waiter'}
+              {isCallWaiterDisabled ? t('callWaiterCooldown', { time: cooldownTime }) : t('callWaiter')}
             </button>
             
             {callWaiterSuccess && (
@@ -213,18 +214,18 @@ function MenuDisplay() {
           {showDialog && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Call Waiter</h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('callWaiterDialogTitle')}</h2>
                 <form onSubmit={handleCallWaiter}>
                   <div className="mb-4">
                     <label htmlFor="tableNumber" className="block text-sm font-medium text-gray-600 mb-1">
-                      Table Number
+                      {t('tableNumber')}
                     </label>
                     <input
                       type="number"
                       id="tableNumber"
                       value={tableNumber}
                       onChange={(e) => setTableNumber(e.target.value)}
-                      placeholder="Enter your table number"
+                      placeholder={t('tableNumberPlaceholder')}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       min="1"
                     />
@@ -239,7 +240,7 @@ function MenuDisplay() {
                       type="submit"
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                     >
-                      Submit
+                      {t('submit')}
                     </button>
                     <button
                       type="button"
@@ -250,7 +251,7 @@ function MenuDisplay() {
                       }}
                       className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors"
                     >
-                      Cancel
+                      {t('cancel')}
                     </button>
                   </div>
                 </form>
@@ -288,8 +289,8 @@ function MenuDisplay() {
               <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">Menu Coming Soon</h3>
-              <p className="text-gray-600">We're preparing something delicious for you!</p>
+              <h3 className="text-xl font-medium text-gray-900 mb-2">{t('menuComingSoon')}</h3>
+              <p className="text-gray-600">{t('menuComingSoonMessage')}</p>
             </div>
           )}
 
@@ -311,12 +312,12 @@ function MenuDisplay() {
                         className="w-20 h-20 object-cover rounded-full mr-4 border-2 border-blue-300"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2248%22%20height%3D%2248%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210%22%20y%3D%2226%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+                          e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2248%22%20height%3D%2248%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3C%2Fg%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210%22%20y%3D%2226%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
                         }}
                       />
                     ) : (
                       <div className="w-20 h-20 bg-blue-300 rounded-full mr-4 flex items-center justify-center">
-                        <span className="text-blue-800 text-sm">No Image</span>
+                        <span className="text-blue-800 text-sm">{t('noImage')}</span>
                       </div>
                     )}
                     <div className="flex-1 flex justify-between items-center">
@@ -349,12 +350,12 @@ function MenuDisplay() {
                                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                                   onError={(e) => {
                                     e.target.onerror = null;
-                                    e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_18945b7b5b4%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210.5%22%20y%3D%22107.1%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+                                    e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18945b7b5b4%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3C%2Fg%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2210.5%22%20y%3D%22107.1%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
                                   }}
                                 />
                               ) : (
                                 <div className="w-full h-full bg-blue-50 flex items-center justify-center rounded-t-lg">
-                                  <span className="text-blue-400 font-medium">No Image</span>
+                                  <span className="text-blue-400 font-medium">{t('noImage')}</span>
                                 </div>
                               )}
                             </div>
@@ -362,7 +363,7 @@ function MenuDisplay() {
                               <h3 className="text-lg font-medium text-gray-900 mb-1 capitalize">{item.name.toLowerCase()}</h3>
                               <div className="flex items-center text-blue-600">
                                 <span className="font-bold">{item.price.toFixed(2)}</span>
-                                <span className="ml-1 text-blue-500 font-medium">DT</span>
+                                <span className="ml-1 text-blue-500 font-medium">{t('currency')}</span>
                               </div>
                             </div>
                           </div>
@@ -376,13 +377,13 @@ function MenuDisplay() {
           )}
 
           <div className="mt-12 bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">We Value Your Feedback</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('feedbackTitle')}</h2>
             <form onSubmit={handleFeedbackSubmit}>
               <div className="mb-4">
                 <textarea
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Share your thoughts or suggestions..."
+                  placeholder={t('shareYourThoughtsPlaceholder')}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   rows="4"
                   maxLength="500"
@@ -406,7 +407,7 @@ function MenuDisplay() {
                 }`}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                {isSubmitting ? t('submitting') : t('submitFeedback')}
               </button>
             </form>
           </div>

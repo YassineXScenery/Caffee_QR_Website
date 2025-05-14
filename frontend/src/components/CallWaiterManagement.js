@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { FiBell, FiTrash2 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 const SOCKET_URL = 'http://localhost:3000';
@@ -13,6 +14,7 @@ function CallWaiterManagement() {
   const [tables, setTables] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { t, i18n } = useTranslation();
 
   // Fetch tables only once on component mount
   useEffect(() => {
@@ -21,7 +23,7 @@ function CallWaiterManagement() {
         const tablesRes = await axios.get(`${API_URL}/tables`);
         setTables(tablesRes.data.map(t => t.table_number));
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load tables');
+        setError(err.response?.data?.error || t('Failed to load tables'));
       }
     };
 
@@ -36,7 +38,7 @@ function CallWaiterManagement() {
         const requestsRes = await axios.get(`${API_URL}/call-waiter`);
         setRequests(requestsRes.data);
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load requests');
+        setError(err.response?.data?.error || t('Failed to load requests'));
       } finally {
         setIsLoading(false);
       }
@@ -66,28 +68,28 @@ function CallWaiterManagement() {
       await axios.delete(`${API_URL}/call-waiter/${id}`);
       setRequests(prev => prev.filter(r => r.id !== id));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to clear request');
+      setError(err.response?.data?.error || t('Failed to clear request'));
     }
   };
 
   const handleClearAll = async () => {
-    if (!window.confirm('Clear all requests?')) return;
+    if (!window.confirm(t('Clear all requests?'))) return;
     try {
       await axios.delete(`${API_URL}/call-waiter`);
       setRequests([]);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to clear requests');
+      setError(err.response?.data?.error || t('Failed to clear requests'));
     }
   };
 
   return (
-    <div id="call-waiter-section" className="mb-16 px-4 sm:px-0">
+    <div id="call-waiter-section" className="mb-16 px-4 sm:px-0" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
           <FiBell className="mr-2" />
-          Waiter Calls
+          {t('waiterCalls')}
           <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-            {requests.length} {requests.length === 1 ? 'request' : 'requests'}
+            {requests.length} {requests.length === 1 ? t('request') : t('requests')}
           </span>
         </h1>
         {requests.length > 0 && (
@@ -95,7 +97,7 @@ function CallWaiterManagement() {
             onClick={handleClearAll}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Clear All
+            {t('clearAll')}
           </button>
         )}
       </div>
@@ -124,8 +126,8 @@ function CallWaiterManagement() {
         ) : requests.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
             <FiBell className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No active requests</h3>
-            <p className="text-sm text-gray-500">Tables will appear here when they call for service</p>
+            <h3 className="text-lg font-medium text-gray-900">{t('No active requests')}</h3>
+            <p className="text-sm text-gray-500">{t('Tables will appear here when they call for service')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -135,7 +137,7 @@ function CallWaiterManagement() {
                 <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-800">Table {request.tableNumber}</h3>
+                      <h3 className="text-lg font-medium text-gray-800">{t('Table')} {request.tableNumber}</h3>
                       <p className="text-sm text-gray-500">
                         {new Date(request.createdAt).toLocaleTimeString()}
                       </p>
@@ -143,7 +145,7 @@ function CallWaiterManagement() {
                     <button
                       onClick={() => handleClearRequest(request.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Clear request"
+                      title={t('Clear request')}
                     >
                       <FiTrash2 className="h-5 w-5" />
                     </button>

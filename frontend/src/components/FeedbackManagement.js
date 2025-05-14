@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { FiMessageSquare, FiTrash2 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 const SOCKET_URL = 'http://localhost:3000';
@@ -9,6 +10,7 @@ const SOCKET_URL = 'http://localhost:3000';
 const socket = io(SOCKET_URL, { reconnectionAttempts: 5 });
 
 function FeedbackManagement() {
+  const { t, i18n } = useTranslation();
   const [feedbacks, setFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +24,7 @@ function FeedbackManagement() {
       });
       setFeedbacks(response.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load feedback');
+      setError(err.response?.data?.error || t('failedToLoadFeedback'));
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -30,7 +32,7 @@ function FeedbackManagement() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadFeedbacks();
@@ -45,7 +47,7 @@ function FeedbackManagement() {
   }, [loadFeedbacks]);
 
   const deleteFeedback = async (id) => {
-    if (!window.confirm('Delete this feedback?')) return;
+    if (!window.confirm(t('confirmDeleteFeedback'))) return;
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/feedback/${id}`, {
@@ -53,12 +55,12 @@ function FeedbackManagement() {
       });
       setFeedbacks(prev => prev.filter(f => f.id !== id));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete feedback');
+      setError(err.response?.data?.error || t('failedToDeleteFeedback'));
     }
   };
 
   const deleteAllFeedbacks = async () => {
-    if (!window.confirm('Delete ALL feedback?')) return;
+    if (!window.confirm(t('confirmDeleteAllFeedback'))) return;
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/feedback`, {
@@ -66,18 +68,18 @@ function FeedbackManagement() {
       });
       setFeedbacks([]);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete feedbacks');
+      setError(err.response?.data?.error || t('failedToDeleteFeedbacks'));
     }
   };
 
   return (
-    <div id="feedback-section" className="mb-16 px-4 sm:px-0">
+    <div id="feedback-section" className="mb-16 px-4 sm:px-0" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
           <FiMessageSquare className="mr-2" />
-          Customer Feedback
+          {t('customerFeedback')}
           <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-            {feedbacks.length} {feedbacks.length === 1 ? 'entry' : 'entries'}
+            {feedbacks.length} {feedbacks.length === 1 ? t('entry') : t('entries')}
           </span>
         </h1>
         {feedbacks.length > 0 && (
@@ -85,7 +87,7 @@ function FeedbackManagement() {
             onClick={deleteAllFeedbacks}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Clear All
+            {t('clearAll')}
           </button>
         )}
       </div>
@@ -113,8 +115,8 @@ function FeedbackManagement() {
       ) : feedbacks.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
           <FiMessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No feedback yet</h3>
-          <p className="text-sm text-gray-500">Customer feedback will appear here</p>
+          <h3 className="text-lg font-medium text-gray-900">{t('noFeedbackYet')}</h3>
+          <p className="text-sm text-gray-500">{t('customerFeedbackWillAppear')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -127,7 +129,7 @@ function FeedbackManagement() {
                 <button
                   onClick={() => deleteFeedback(feedback.id)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                  title="Delete feedback"
+                  title={t('deleteFeedback')}
                 >
                   <FiTrash2 className="h-5 w-5" />
                 </button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiUsers, FiTag, FiBell, FiList, FiMessageSquare, FiLogOut, FiHome } from 'react-icons/fi';
+import { FiMenu, FiX, FiUsers, FiTag, FiBell, FiList, FiMessageSquare, FiLogOut, FiHome, FiSettings } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import AdminManagement from './AdminManagement';
 import ItemManagement from './ItemManagement';
 import TableManagement from './TableManagement';
@@ -9,8 +10,10 @@ import CallWaiterManagement from './CallWaiterManagement';
 import FeedbackManagement from './FeedbackManagement';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationBell from './NotificationBell';
+import SettingsPanel from './SettingsPanel';
 
 function Admins() {
+  const { t, i18n } = useTranslation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('admins-section');
   const navigate = useNavigate();
@@ -60,6 +63,7 @@ function Admins() {
       'tables-section',
       'call-waiter-section',
       'feedback-section',
+      'settings-section',
     ];
 
     const handleScroll = () => {
@@ -95,11 +99,11 @@ function Admins() {
         mainContent.removeEventListener('scroll', handleScroll);
       }
     };
-  }, []); // Empty dependency array since sections is now defined inside
+  }, []);
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-blue-50 flex">
+      <div className="min-h-screen bg-blue-50 flex" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
         {/* Mobile sidebar backdrop */}
         {isSidebarOpen && (
           <div 
@@ -110,13 +114,13 @@ function Admins() {
 
         {/* Sidebar */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          className={`fixed inset-y-0 ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-50 w-72 bg-white shadow-2xl transform ${
+            isSidebarOpen ? 'translate-x-0' : (i18n.language === 'ar' ? 'translate-x-full' : '-translate-x-full')
           } md:translate-x-0 transition-transform duration-300 ease-in-out md:w-64 md:static rounded-r-3xl overflow-hidden`}
         >
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between h-20 px-6 border-b border-blue-100 bg-blue-500">
-              <h2 className="text-xl font-semibold text-white"> Cafe Admin Panel </h2>
+              <h2 className="text-xl font-semibold text-white">{t('adminPanel')}</h2>
               <button
                 className="md:hidden text-blue-100 hover:text-white"
                 onClick={() => setIsSidebarOpen(false)}
@@ -135,7 +139,7 @@ function Admins() {
                 }`}
               >
                 <FiUsers className="h-5 w-5 mr-3" />
-                <span className="font-medium">Admin Accounts</span>
+                <span className="font-medium">{t('adminAccounts')}</span>
               </button>
 
               <button
@@ -147,7 +151,7 @@ function Admins() {
                 }`}
               >
                 <FiList className="h-5 w-5 mr-3" />
-                <span className="font-medium">Categories</span>
+                <span className="font-medium">{t('categories')}</span>
               </button>
 
               <button
@@ -159,7 +163,7 @@ function Admins() {
                 }`}
               >
                 <FiTag className="h-5 w-5 mr-3" />
-                <span className="font-medium">Menu Items</span>
+                <span className="font-medium">{t('menuItems')}</span>
               </button>
 
               <button
@@ -173,7 +177,7 @@ function Admins() {
                 <svg className="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m4-8h4m-4 0a2 2 0 00-2 2v2h8V5a2 2 0 00-2-2m-4 8v4m4-4v4" />
                 </svg>
-                <span className="font-medium">Tables</span>
+                <span className="font-medium">{t('tables')}</span>
               </button>
 
               <button
@@ -185,7 +189,7 @@ function Admins() {
                 }`}
               >
                 <FiBell className="h-5 w-5 mr-3" />
-                <span className="font-medium">Waiters Calls</span>
+                <span className="font-medium">{t('waitersCalls')}</span>
               </button>
 
               <button
@@ -197,7 +201,19 @@ function Admins() {
                 }`}
               >
                 <FiMessageSquare className="h-5 w-5 mr-3" />
-                <span className="font-medium">Customer Feedback</span>
+                <span className="font-medium">{t('customerFeedback')}</span>
+              </button>
+
+              <button
+                onClick={() => scrollToSection('settings-section')}
+                className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all ${
+                  activeSection === 'settings-section'
+                    ? 'bg-blue-100 text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <FiSettings className="h-5 w-5 mr-3" />
+                <span className="font-medium">{t('settings')}</span>
               </button>
 
               <button
@@ -205,7 +221,7 @@ function Admins() {
                 className="flex items-center w-full px-4 py-3 mt-4 text-blue-600 hover:bg-blue-50 rounded-2xl transition-all"
               >
                 <FiLogOut className="h-5 w-5 mr-3" />
-                <span className="font-medium">Logout</span>
+                <span className="font-medium">{t('logout')}</span>
               </button>
             </nav>
           </div>
@@ -224,7 +240,7 @@ function Admins() {
                 <h1 className="text-xl md:text-2xl font-semibold text-gray-800 flex items-center">
                   <FiHome className="mr-2 text-blue-500" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
-                    Cafe Management Dashboard
+                    {t('adminPanel')}
                   </span>
                 </h1>
               </div>
@@ -246,6 +262,7 @@ function Admins() {
               <TableManagement />
               <CallWaiterManagement />
               <FeedbackManagement />
+              <SettingsPanel />
             </div>
           </main>
         </div>

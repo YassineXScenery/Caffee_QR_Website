@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
 function CategoryManagement({ onCategoryChange }) {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState('');
   const [categoryImage, setCategoryImage] = useState(null);
@@ -22,16 +24,16 @@ function CategoryManagement({ onCategoryChange }) {
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
-      setErrorCategories(error.response?.data?.error || 'Failed to load categories');
+      setErrorCategories(error.response?.data?.error || t('failedToLoadCategories'));
     } finally {
       setIsLoadingCategories(false);
     }
-  }, []);
+  }, [t]);
 
   const handleSubmitCategory = async (e) => {
     e.preventDefault();
     if (!categoryName.trim()) {
-      setErrorCategories('Please enter a category name');
+      setErrorCategories(t('enterCategoryName'));
       return;
     }
 
@@ -50,12 +52,12 @@ function CategoryManagement({ onCategoryChange }) {
         await axios.put(`${API_URL}/menu/${editingCategory.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        setSuccessCategories('Category updated successfully!');
+        setSuccessCategories(t('categoryUpdated'));
       } else {
         await axios.post(`${API_URL}/menu`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        setSuccessCategories('Category added successfully!');
+        setSuccessCategories(t('categoryAdded'));
       }
       setCategoryName('');
       setCategoryImage(null);
@@ -64,7 +66,7 @@ function CategoryManagement({ onCategoryChange }) {
       onCategoryChange();
     } catch (error) {
       console.error('Error saving category:', error);
-      setErrorCategories(error.response?.data?.error || 'Failed to save category');
+      setErrorCategories(error.response?.data?.error || t('failedToSaveCategory'));
     } finally {
       setIsLoadingCategories(false);
       setTimeout(() => setSuccessCategories(null), 3000);
@@ -72,7 +74,7 @@ function CategoryManagement({ onCategoryChange }) {
   };
 
   const deleteCategory = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this category? All associated items will also be deleted.')) {
+    if (!window.confirm(t('confirmDeleteCategory'))) {
       return;
     }
 
@@ -80,12 +82,12 @@ function CategoryManagement({ onCategoryChange }) {
     setErrorCategories(null);
     try {
       await axios.delete(`${API_URL}/menu/${id}`);
-      setSuccessCategories('Category deleted successfully!');
+      setSuccessCategories(t('categoryDeleted'));
       loadCategories();
       onCategoryChange();
     } catch (error) {
       console.error('Error deleting category:', error);
-      setErrorCategories(error.response?.data?.error || 'Failed to delete category');
+      setErrorCategories(error.response?.data?.error || t('failedToDeleteCategory'));
     } finally {
       setIsLoadingCategories(false);
       setTimeout(() => setSuccessCategories(null), 3000);
@@ -112,42 +114,42 @@ function CategoryManagement({ onCategoryChange }) {
   return (
     <div id="categories-section" className="mb-16 px-4 sm:px-0">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-        Menu Categories
+        {t('menuCategories')}
         <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-          {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+          {categories.length} {categories.length === 1 ? t('category') : t('categories')}
         </span>
       </h1>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
-            {editingCategory ? 'Edit Category' : 'Add New Category'}
+            {editingCategory ? t('editCategory') : t('addNewCategory')}
           </h2>
           <form onSubmit={handleSubmitCategory}>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Category Name</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">{t('categoryName')}</label>
               <input
                 type="text"
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
-                placeholder="Enter category name"
+                placeholder={t('enterCategoryNamePlaceholder')}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Category Image</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">{t('categoryImage')}</label>
               <div className="flex items-center space-x-4">
                 <label className="flex flex-col items-center justify-center w-full max-w-xs p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                   {categoryImage ? (
                     <img 
                       src={URL.createObjectURL(categoryImage)} 
-                      alt="Preview" 
+                      alt={t('preview')} 
                       className="h-16 w-16 object-cover rounded-lg"
                     />
                   ) : (
                     <div className="flex flex-col items-center">
                       <FiImage className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Click to upload</span>
+                      <span className="text-sm text-gray-500">{t('clickToUpload')}</span>
                     </div>
                   )}
                   <input
@@ -159,10 +161,10 @@ function CategoryManagement({ onCategoryChange }) {
                 </label>
                 {editingCategory?.image && !categoryImage && (
                   <div className="flex flex-col items-center">
-                    <p className="text-sm text-gray-500 mb-1">Current Image</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('currentImage')}</p>
                     <img
                       src={`${BASE_URL}${editingCategory.image}`}
-                      alt="Current"
+                      alt={t('currentImageAlt')}
                       className="h-16 w-16 object-cover rounded-lg border border-gray-200"
                     />
                   </div>
@@ -185,7 +187,7 @@ function CategoryManagement({ onCategoryChange }) {
                 ) : (
                   <FiPlus className="mr-1" />
                 )}
-                {isLoadingCategories ? 'Processing...' : editingCategory ? 'Update Category' : 'Add Category'}
+                {isLoadingCategories ? t('processing') : editingCategory ? t('update') : t('add')}
               </button>
               {editingCategory && (
                 <button
@@ -194,7 +196,7 @@ function CategoryManagement({ onCategoryChange }) {
                   className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors text-sm font-medium"
                 >
                   <FiX className="inline mr-1" />
-                  Cancel
+                  {t('cancel')}
                 </button>
               )}
             </div>
@@ -246,8 +248,8 @@ function CategoryManagement({ onCategoryChange }) {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No categories yet</h3>
-          <p className="mt-1 text-sm text-gray-500">Add your first category to get started</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('noCategories')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('addFirstCategory')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -273,21 +275,21 @@ function CategoryManagement({ onCategoryChange }) {
                   <button
                     onClick={() => startEditingCategory(category)}
                     className="p-2 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Edit"
+                    title={t('edit')}
                   >
                     <FiEdit2 className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => deleteCategory(category.id)}
                     className="p-2 bg-white rounded-full shadow-md text-red-600 hover:bg-red-50 transition-colors"
-                    title="Delete"
+                    title={t('delete')}
                   >
                     <FiTrash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
               <div className="p-4">
-              <h3 className="text-lg font-medium text-gray-800 truncate">{category.categorie}</h3>
+                <h3 className="text-lg font-medium text-gray-800 truncate">{category.categorie}</h3>
               </div>
             </div>
           ))}

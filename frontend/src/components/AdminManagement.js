@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FiUser, FiEdit2, FiTrash2, FiX, FiCheck, FiPlus } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 
 function AdminManagement() {
+  const { t } = useTranslation();
   const [admins, setAdmins] = useState([]);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +30,7 @@ function AdminManagement() {
       setAdmins(response.data);
     } catch (error) {
       console.error('Error loading admins:', error);
-      setErrorAdmins(error.response?.data?.error || 'Failed to load admins');
+      setErrorAdmins(error.response?.data?.error || t('errorLoadingAdmins'));
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -36,16 +38,16 @@ function AdminManagement() {
     } finally {
       setIsLoadingAdmins(false);
     }
-  }, []);
+  }, [t]);
 
   const handleSubmitAdmin = async (e) => {
     e.preventDefault();
     if (!username.trim()) {
-      setErrorAdmins('Please enter a username');
+      setErrorAdmins(t('enterUsername'));
       return;
     }
     if (!editingAdmin && (!password.trim() || password.length < 6)) {
-      setErrorAdmins('Please enter a password (minimum 6 characters)');
+      setErrorAdmins(t('passwordMinLength'));
       return;
     }
 
@@ -63,12 +65,12 @@ function AdminManagement() {
         await axios.put(`${API_URL}/admins/${editingAdmin.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setSuccessAdmins('Admin updated successfully!');
+        setSuccessAdmins(t('adminUpdated'));
       } else {
         await axios.post(`${API_URL}/admins`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setSuccessAdmins('Admin added successfully!');
+        setSuccessAdmins(t('adminAdded'));
       }
       setUsername('');
       setPassword('');
@@ -76,7 +78,7 @@ function AdminManagement() {
       loadAdmins();
     } catch (error) {
       console.error('Error saving admin:', error);
-      setErrorAdmins(error.response?.data?.error || 'Failed to save admin');
+      setErrorAdmins(error.response?.data?.error || t('error'));
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -88,7 +90,7 @@ function AdminManagement() {
   };
 
   const deleteAdmin = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this admin?')) {
+    if (!window.confirm(t('confirmDeleteAdmin'))) {
       return;
     }
 
@@ -99,11 +101,11 @@ function AdminManagement() {
       await axios.delete(`${API_URL}/admins/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccessAdmins('Admin deleted successfully!');
+      setSuccessAdmins(t('adminDeleted'));
       loadAdmins();
     } catch (error) {
       console.error('Error deleting admin:', error);
-      setErrorAdmins(error.response?.data?.error || 'Failed to delete admin');
+      setErrorAdmins(error.response?.data?.error || t('error'));
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         window.location.href = '/login';
@@ -134,22 +136,22 @@ function AdminManagement() {
   return (
     <div id="admins-section" className="mb-16 px-4 sm:px-0">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-        Admin Accounts
+        {t('adminAccounts')}
         <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-          {admins.length} {admins.length === 1 ? 'admin' : 'admins'}
+          {t('adminsCount', { count: admins.length })}
         </span>
       </h1>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
-            {editingAdmin ? 'Edit Admin' : 'Add New Admin'}
+            {editingAdmin ? t('editAdmin') : t('addNewAdmin')}
           </h2>
           <form onSubmit={handleSubmitAdmin}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-1">
-                  Username
+                  {t('username')}
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -160,7 +162,7 @@ function AdminManagement() {
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter username"
+                    placeholder={t('enterUsername')}
                     className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -168,7 +170,7 @@ function AdminManagement() {
               {!editingAdmin && (
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">
-                    Password
+                    {t('password')}
                   </label>
                   <div className="relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -179,7 +181,7 @@ function AdminManagement() {
                       id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter password"
+                      placeholder={t('enterPassword')}
                       className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     />
                   </div>
@@ -202,7 +204,7 @@ function AdminManagement() {
                 ) : (
                   <FiPlus className="mr-1" />
                 )}
-                {isLoadingAdmins ? 'Processing...' : editingAdmin ? 'Update Admin' : 'Add Admin'}
+                {isLoadingAdmins ? t('loading') : editingAdmin ? t('update') : t('add')}
               </button>
               {editingAdmin && (
                 <button
@@ -211,7 +213,7 @@ function AdminManagement() {
                   className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors text-sm font-medium"
                 >
                   <FiX className="inline mr-1" />
-                  Cancel
+                  {t('cancel')}
                 </button>
               )}
             </div>
@@ -265,8 +267,8 @@ function AdminManagement() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">No admins yet</h3>
-          <p className="mt-1 text-sm text-gray-500">Add your first admin account to get started</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('noAdmins')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('addFirstAdmin')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -279,21 +281,21 @@ function AdminManagement() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-800">{admin.username}</h3>
-                    <p className="text-xs text-gray-500">Admin account</p>
+                    <p className="text-xs text-gray-500">{t('adminAccount')}</p>
                   </div>
                 </div>
                 <div className="flex space-x-1">
                   <button
                     onClick={() => startEditingAdmin(admin)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title="Edit"
+                    title={t('edit')}
                   >
                     <FiEdit2 className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => deleteAdmin(admin.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete"
+                    title={t('delete')}
                   >
                     <FiTrash2 className="h-4 w-4" />
                   </button>

@@ -1,10 +1,19 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import './i18n';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+// Initialize translations
+const savedLanguage = localStorage.getItem('preferredLanguage');
+if (savedLanguage) {
+  import('./i18n').then((i18n) => {
+    i18n.default.changeLanguage(savedLanguage);
+  });
+}
+
+const root = createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
