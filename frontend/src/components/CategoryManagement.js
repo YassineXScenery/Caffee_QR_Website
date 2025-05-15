@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
-function CategoryManagement({ onCategoryChange }) {
+function CategoryManagement({ onCategoryChange, mainContentRef }) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState('');
@@ -98,6 +98,36 @@ function CategoryManagement({ onCategoryChange }) {
     setEditingCategory(category);
     setCategoryName(category.categorie);
     setCategoryImage(null);
+
+    // Debugging logs
+    console.log('Starting to edit category:', category);
+
+    setTimeout(() => {
+      const formSection = document.getElementById('categories-section');
+      const container = mainContentRef?.current;
+
+      if (formSection && container) {
+        const headerOffset = 20;
+        const mainContentTop = container.getBoundingClientRect().top;
+        const elementTop = formSection.getBoundingClientRect().top;
+        const scrollPosition = elementTop - mainContentTop + container.scrollTop - headerOffset;
+
+        // Debugging logs
+        console.log('Scrolling to categories-section within container:', {
+          scrollPosition,
+          headerOffset,
+          formSection,
+          container
+        });
+
+        container.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        console.error('categories-section element or container not found');
+      }
+    }, 200);
   };
 
   const cancelEditingCategory = () => {
@@ -122,7 +152,7 @@ function CategoryManagement({ onCategoryChange }) {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">
+          <h2 className="text-lg font-medium text-gray-800 mb-4" id="category-form">
             {editingCategory ? t('editCategory') : t('addNewCategory')}
           </h2>
           <form onSubmit={handleSubmitCategory}>
@@ -273,7 +303,10 @@ function CategoryManagement({ onCategoryChange }) {
                 )}
                 <div className="absolute top-2 right-2 flex space-x-1">
                   <button
-                    onClick={() => startEditingCategory(category)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      startEditingCategory(category);
+                    }}
                     className="p-2 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
                     title={t('edit')}
                   >

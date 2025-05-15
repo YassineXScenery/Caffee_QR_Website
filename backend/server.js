@@ -12,6 +12,7 @@ const itemRoutes = require('./routes/items');
 const categoryRoutes = require('./routes/menu');
 const callWaiterRoutes = require('./routes/call-waiter');
 const feedbackRoutes = require('./routes/feedback'); // Import feedback routes
+const footerRoutes = require('./routes/footer'); // Import footer routes
 
 const app = express();
 const server = http.createServer(app);
@@ -50,6 +51,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/menu', categoryRoutes);
 app.use('/api/call-waiter', callWaiterRoutes);
 app.use('/api/feedback', feedbackRoutes); // Mount feedback routes
+app.use('/api/footer', footerRoutes); // Mount footer routes
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

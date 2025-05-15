@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
-function ItemManagement() {
+function ItemManagement({ mainContentRef }) {
   const { t, i18n } = useTranslation();
   const [items, setItems] = useState([]);
   const [categoriesForItems, setCategoriesForItems] = useState([]);
@@ -153,6 +153,36 @@ function ItemManagement() {
     setCategoryId(item.category_id.toString());
     setPrice(item.price.toString());
     setItemImage(null);
+
+    // Debugging logs
+    console.log('Starting to edit item:', item);
+
+    setTimeout(() => {
+      const formSection = document.getElementById('items-section');
+      const container = mainContentRef?.current;
+
+      if (formSection && container) {
+        const headerOffset = 20;
+        const mainContentTop = container.getBoundingClientRect().top;
+        const elementTop = formSection.getBoundingClientRect().top;
+        const scrollPosition = elementTop - mainContentTop + container.scrollTop - headerOffset;
+
+        // Debugging logs
+        console.log('Scrolling to items-section within container:', {
+          scrollPosition,
+          headerOffset,
+          formSection,
+          container
+        });
+
+        container.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        console.error('items-section element or container not found');
+      }
+    }, 200);
   };
 
   const resetItemForm = () => {
@@ -179,8 +209,7 @@ function ItemManagement() {
       </h1>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">
+        <div className="p-6">          <h2 className="text-lg font-medium text-gray-800 mb-4" id="item-form">
             {editingItem ? t('editItem') : t('addNewItem')}
           </h2>
           <form onSubmit={handleSubmitItem}>
@@ -377,10 +406,11 @@ function ItemManagement() {
                   <div className="w-full h-full flex items-center justify-center">
                     <FiImage className="h-10 w-10 text-gray-400" />
                   </div>
-                )}
-                <div className="absolute top-1.5 right-1.5 flex space-x-1">
-                  <button
-                    onClick={() => startEditingItem(item)}
+                )}                <div className="absolute top-1.5 right-1.5 flex space-x-1">                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      startEditingItem(item);
+                    }}
                     className="p-1.5 bg-white rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
                     title={t('edit')}
                   >

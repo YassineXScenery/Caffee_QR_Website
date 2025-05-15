@@ -256,9 +256,9 @@ function Admins() {
             style={{ maxHeight: 'calc(100vh - 4rem)' }}
           >
             <div className="max-w-7xl mx-auto space-y-8">
-              <AdminManagement />
-              <CategoryManagement />
-              <ItemManagement />
+              <AdminManagement mainContentRef={mainContentRef} />
+              <CategoryManagement mainContentRef={mainContentRef} />
+              <ItemManagement mainContentRef={mainContentRef} />
               <TableManagement />
               <CallWaiterManagement />
               <FeedbackManagement />

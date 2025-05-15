@@ -4,11 +4,20 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 const resources = {
   en: {
-    translation: {
-      // General
+    translation: {      // General
       settings: 'Settings',
       beta: 'Beta',
       languageSettings: 'Language Settings',
+      footerSettings: 'Footer Settings',
+      socialMedia: 'Social Media',
+      address: 'Address',
+      phoneNumber: 'Phone Number',
+      facebook: 'Facebook',
+      instagram: 'Instagram',
+      twitter: 'Twitter',
+      enterPhoneNumber: 'Enter phone number',
+      enterAddress: 'Enter address',
+      enterSocialMedia: 'Enter social media URL',
       selectLanguage: 'Select Language',
       english: 'English',
       french: 'French',
@@ -112,6 +121,35 @@ const resources = {
       feedbackTime: 'Submitted at {{time}}',
       confirmClearFeedback: 'Are you sure you want to delete all feedback?',
       deleteFeedback: 'Delete feedback',
+      feedbackError: 'Failed to submit feedback.',
+
+      // Footer
+      followUs: 'Follow Us',
+      contactUs: 'Contact Us',
+      location: 'Location',
+      copyright: 'All rights reserved.',
+      phone: 'Phone',
+      email: 'Email',
+      address: 'Address',
+      facebook: 'Facebook',
+      instagram: 'Instagram',
+      twitter: 'Twitter',      // Footer Settings
+      footerSettings: 'Footer Settings',
+      socialMedia: 'Social Media',
+      contactInformation: 'Contact Information',
+      locationInformation: 'Location Information',
+      addSocialMedia: 'Add Social Media Link',
+      addPhone: 'Add Additional Phone Number',
+      addAddress: 'Add Additional Address',
+      saveSettings: 'Save Changes',
+      enterPhoneNumber: 'Enter phone number',
+      enterEmailAddress: 'Enter email address',
+      enterAddress: 'Enter address',
+      platform: 'Platform',
+      link: 'Link',
+      enterLink: 'Enter link',
+      enterDisplayName: 'Enter display name',
+      displayName: 'Display Name',
 
       // Notifications
       notifications: 'Notifications',
@@ -312,6 +350,34 @@ const resources = {
       category: 'Catégorie',
       price: 'Prix (DT)',
       itemImage: "Image de l'article",
+
+      // Footer
+      followUs: 'Suivez-nous',
+      contactUs: 'Contactez-nous',
+      location: 'Localisation',
+      copyright: 'Tous droits réservés.',
+      phone: 'Téléphone',
+      email: 'E-mail',
+      address: 'Adresse',
+      facebook: 'Facebook',
+      instagram: 'Instagram',
+      twitter: 'Twitter',      // Footer Settings
+      footerSettings: 'Paramètres du pied de page',
+      socialMedia: 'Réseaux sociaux',
+      contactInformation: 'Informations de contact',
+      locationInformation: 'Informations de localisation',
+      addSocialMedia: 'Ajouter un réseau social',
+      addPhone: 'Ajouter un numéro de téléphone supplémentaire',
+      addAddress: 'Ajouter une adresse supplémentaire',
+      saveSettings: 'Enregistrer les modifications',
+      enterPhoneNumber: 'Entrez le numéro de téléphone',
+      enterEmailAddress: 'Entrez l\'adresse e-mail',
+      enterAddress: 'Entrez l\'adresse',
+      platform: 'Plateforme',
+      link: 'Lien',
+      enterLink: 'Entrez le lien',
+      enterDisplayName: 'Entrer le nom d\'affichage',
+      displayName: 'Nom d\'affichage',
     }
   },
   ar: {
@@ -469,6 +535,34 @@ const resources = {
       category: 'التصنيف',
       itemImage: 'صورة العنصر',
       price: 'السعر (دينار)',
+
+      // Footer
+      followUs: 'تابعنا',
+      contactUs: 'اتصل بنا',
+      location: 'الموقع',
+      copyright: 'جميع الحقوق محفوظة.',
+      phone: 'الهاتف',
+      email: 'البريد الإلكتروني',
+      address: 'العنوان',
+      facebook: 'فيسبوك',
+      instagram: 'انستغرام',
+      twitter: 'تويتر',      // Footer Settings
+      footerSettings: 'إعدادات التذييل',
+      socialMedia: 'وسائل التواصل الاجتماعي',
+      contactInformation: 'معلومات الاتصال',
+      locationInformation: 'معلومات الموقع',
+      addSocialMedia: 'إضافة وسائل التواصل الاجتماعي',
+      addPhone: 'إضافة رقم هاتف إضافي',
+      addAddress: 'إضافة عنوان إضافي', 
+      saveSettings: 'حفظ التغييرات',
+      enterPhoneNumber: 'أدخل رقم الهاتف',
+      enterEmailAddress: 'أدخل البريد الإلكتروني',
+      enterAddress: 'أدخل العنوان',
+      platform: 'المنصة',
+      link: 'الرابط',
+      enterLink: 'أدخل الرابط',
+      enterDisplayName: 'أدخل اسم العرض',
+      displayName: 'اسم العرض',
     }
   }
 };

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
 
-function AdminManagement() {
+function AdminManagement({ mainContentRef }) {
   const { t } = useTranslation();
   const [admins, setAdmins] = useState([]);
   const [username, setUsername] = useState('');
@@ -120,6 +120,36 @@ function AdminManagement() {
     setEditingAdmin(admin);
     setUsername(admin.username);
     setPassword('');
+
+    // Debugging logs
+    console.log('Starting to edit admin:', admin);
+
+    setTimeout(() => {
+      const formSection = document.getElementById('admins-section');
+      const container = mainContentRef?.current;
+
+      if (formSection && container) {
+        const headerOffset = 20;
+        const mainContentTop = container.getBoundingClientRect().top;
+        const elementTop = formSection.getBoundingClientRect().top;
+        const scrollPosition = elementTop - mainContentTop + container.scrollTop - headerOffset;
+
+        // Debugging logs
+        console.log('Scrolling to admins-section within container:', {
+          scrollPosition,
+          headerOffset,
+          formSection,
+          container
+        });
+
+        container.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        console.error('admins-section element or container not found');
+      }
+    }, 200);
   };
 
   const cancelEditingAdmin = () => {
@@ -144,7 +174,7 @@ function AdminManagement() {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">
+          <h2 className="text-lg font-medium text-gray-800 mb-4" id="admin-form">
             {editingAdmin ? t('editAdmin') : t('addNewAdmin')}
           </h2>
           <form onSubmit={handleSubmitAdmin}>
@@ -286,7 +316,21 @@ function AdminManagement() {
                 </div>
                 <div className="flex space-x-1">
                   <button
-                    onClick={() => startEditingAdmin(admin)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      startEditingAdmin(admin);
+                      // Scroll to form section smoothly
+                      const formSection = document.getElementById('admin-form');
+                      if (formSection) {
+                        const headerOffset = 120; // Increased offset for better visibility
+                        const elementPosition = formSection.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: 'smooth'
+                        });
+                      }
+                    }}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                     title={t('edit')}
                   >
