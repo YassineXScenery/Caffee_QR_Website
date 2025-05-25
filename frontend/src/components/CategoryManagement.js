@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
-function CategoryManagement({ onCategoryChange, mainContentRef }) {
+function CategoryManagement({ onCategoryChange = () => {}, mainContentRef }) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState('');
@@ -15,12 +15,14 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [errorCategories, setErrorCategories] = useState(null);
   const [successCategories, setSuccessCategories] = useState(null);
+  const fileInputRef = useRef(null);
 
   const loadCategories = useCallback(async () => {
     setIsLoadingCategories(true);
     setErrorCategories(null);
     try {
       const response = await axios.get(`${API_URL}/menu`);
+      console.log('Loaded categories:', response.data);
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -39,37 +41,63 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
 
     setIsLoadingCategories(true);
     setErrorCategories(null);
+
     try {
       const formData = new FormData();
       formData.append('categorie', categoryName);
+
       if (categoryImage) {
         formData.append('image', categoryImage);
-      } else if (editingCategory) {
-        formData.append('image', editingCategory.image || '');
+        console.log('Appending new image to formData:', categoryImage.name);
+      } else if (editingCategory && editingCategory.image) {
+        // Only append existing image if it's a valid path
+        if (editingCategory.image.startsWith('/uploads/')) {
+          formData.append('image', editingCategory.image);
+          console.log('Appending existing image to formData:', editingCategory.image);
+        }
       }
 
       if (editingCategory) {
-        await axios.put(`${API_URL}/menu/${editingCategory.id}`, formData, {
+        const response = await axios.put(`${API_URL}/menu/${editingCategory.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
+        console.log('Category update response:', response.data);
         setSuccessCategories(t('categoryUpdated'));
       } else {
-        await axios.post(`${API_URL}/menu`, formData, {
+        const response = await axios.post(`${API_URL}/menu`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
+        console.log('Category create response:', response.data);
         setSuccessCategories(t('categoryAdded'));
       }
+
+      // Reset form and states
       setCategoryName('');
       setCategoryImage(null);
       setEditingCategory(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       loadCategories();
-      onCategoryChange();
+      // Call onCategoryChange only if it's a function
+      if (typeof onCategoryChange === 'function') {
+        onCategoryChange();
+      }
     } catch (error) {
       console.error('Error saving category:', error);
-      setErrorCategories(error.response?.data?.error || t('failedToSaveCategory'));
+      const errorMessage = error.response?.data?.error || t('failedToSaveCategory');
+      setErrorCategories(errorMessage);
+      console.log('Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+      });
     } finally {
       setIsLoadingCategories(false);
-      setTimeout(() => setSuccessCategories(null), 3000);
+      // Clear success and error messages after 3 seconds
+      setTimeout(() => {
+        setSuccessCategories(null);
+        setErrorCategories(null);
+      }, 3000);
     }
   };
 
@@ -81,16 +109,23 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
     setIsLoadingCategories(true);
     setErrorCategories(null);
     try {
-      await axios.delete(`${API_URL}/menu/${id}`);
+      const response = await axios.delete(`${API_URL}/menu/${id}`);
+      console.log('Category delete response:', response.data);
       setSuccessCategories(t('categoryDeleted'));
       loadCategories();
-      onCategoryChange();
+      // Call onCategoryChange only if it's a function
+      if (typeof onCategoryChange === 'function') {
+        onCategoryChange();
+      }
     } catch (error) {
       console.error('Error deleting category:', error);
       setErrorCategories(error.response?.data?.error || t('failedToDeleteCategory'));
     } finally {
       setIsLoadingCategories(false);
-      setTimeout(() => setSuccessCategories(null), 3000);
+      setTimeout(() => {
+        setSuccessCategories(null);
+        setErrorCategories(null);
+      }, 3000);
     }
   };
 
@@ -98,8 +133,8 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
     setEditingCategory(category);
     setCategoryName(category.categorie);
     setCategoryImage(null);
+    setErrorCategories(null);
 
-    // Debugging logs
     console.log('Starting to edit category:', category);
 
     setTimeout(() => {
@@ -112,17 +147,16 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
         const elementTop = formSection.getBoundingClientRect().top;
         const scrollPosition = elementTop - mainContentTop + container.scrollTop - headerOffset;
 
-        // Debugging logs
         console.log('Scrolling to categories-section within container:', {
           scrollPosition,
           headerOffset,
           formSection,
-          container
+          container,
         });
 
         container.scrollTo({
           top: scrollPosition,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       } else {
         console.error('categories-section element or container not found');
@@ -135,6 +169,9 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
     setCategoryName('');
     setCategoryImage(null);
     setErrorCategories(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   useEffect(() => {
@@ -185,6 +222,7 @@ function CategoryManagement({ onCategoryChange, mainContentRef }) {
                   <input
                     type="file"
                     accept="image/*"
+                    ref={fileInputRef}
                     onChange={(e) => setCategoryImage(e.target.files[0])}
                     className="hidden"
                   />

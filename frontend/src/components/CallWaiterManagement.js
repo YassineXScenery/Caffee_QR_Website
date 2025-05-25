@@ -14,6 +14,8 @@ function CallWaiterManagement() {
   const [tables, setTables] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [callWaiterEnabled, setCallWaiterEnabled] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { t, i18n } = useTranslation();
 
   // Fetch tables only once on component mount
@@ -63,6 +65,31 @@ function CallWaiterManagement() {
     };
   }, [tables]); // Depend on tables, but tables is now stable
 
+  // Fetch callWaiterEnabled setting
+  useEffect(() => {
+    axios.get(`${API_URL}/footer`).then(res => {
+      setCallWaiterEnabled(res.data?.features?.callWaiterEnabled !== false);
+    });
+  }, []);
+
+  const handleSwitch = async () => {
+    setIsSaving(true);
+    try {
+      const res = await axios.get(`${API_URL}/footer`);
+      const settings = res.data;
+      settings.features = settings.features || {};
+      settings.features.callWaiterEnabled = !callWaiterEnabled;
+      await axios.put(`${API_URL}/footer`, { settings }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setCallWaiterEnabled(!callWaiterEnabled);
+    } catch (err) {
+      alert(t('Failed to update setting'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleClearRequest = async (id) => {
     try {
       await axios.delete(`${API_URL}/call-waiter/${id}`);
@@ -82,16 +109,58 @@ function CallWaiterManagement() {
     }
   };
 
+  // Custom Switch Component
+  function ToggleSwitch({ checked, onChange, disabled }) {
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={onChange}
+        disabled={disabled}
+        className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          checked ? 'bg-blue-600' : 'bg-gray-300'
+        } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+        style={{ minWidth: 48 }}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${
+            checked ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    );
+  }
+
+  if (!callWaiterEnabled) {
+    return (
+      <div id="call-waiter-section" className="mb-16 px-4 sm:px-0 flex items-center gap-4" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
+        <FiBell className="mr-2" />
+        <span className="text-xl font-semibold text-gray-800">{t('waiterCalls') || 'Call Waiter'}</span>
+        <span className="ml-4 flex items-center select-none">
+          <span className="mr-2 text-sm text-gray-600">{t('Enable')}</span>
+          <ToggleSwitch checked={callWaiterEnabled} onChange={handleSwitch} disabled={isSaving} />
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div id="call-waiter-section" className="mb-16 px-4 sm:px-0" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
-          <FiBell className="mr-2" />
-          {t('waiterCalls')}
-          <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-            {requests.length} {requests.length === 1 ? t('request') : t('requests')}
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
+            <FiBell className="mr-2" />
+            {t('waiterCalls')}
+            <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+              {requests.length} {requests.length === 1 ? t('request') : t('requests')}
+            </span>
+          </h1>
+          <span className="ml-4 flex items-center select-none">
+            <span className="mr-2 text-sm text-gray-600">{t('Enable')}</span>
+            <ToggleSwitch checked={callWaiterEnabled} onChange={handleSwitch} disabled={isSaving} />
           </span>
-        </h1>
+        </div>
         {requests.length > 0 && (
           <button 
             onClick={handleClearAll}

@@ -1,33 +1,8 @@
 const db = require("../databasemenu");
-const multer = require('multer');
+const upload = require('../uploadMiddleware');
 const path = require('path');
-
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'uploads'); // Go up one directory to backend/uploads
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only .jpeg, .jpg, and .png files are allowed!'));
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
+const fs = require('fs');
+const { UPLOADS_DIR } = require('../config/paths');
 
 // CREATE
 exports.createCategory = [
@@ -38,7 +13,7 @@ exports.createCategory = [
 
     console.log('Creating category with data:', { categorie, imagePath });
     if (req.file) {
-      console.log('File uploaded:', req.file.filename, 'at path:', path.join(__dirname, '..', 'uploads', req.file.filename));
+      console.log('File uploaded:', req.file.filename, 'at path:', path.join(UPLOADS_DIR, req.file.filename));
     }
 
     if (!categorie || categorie.trim() === "") {
@@ -98,30 +73,71 @@ exports.updateCategory = [
   upload.single('image'),
   (req, res) => {
     const { id } = req.params;
-    const { categorie } = req.body;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : req.body.image;
+    const { categorie, image } = req.body;
+    let imagePath = req.file ? `/uploads/${req.file.filename}` : (image || null);
 
-    console.log('Updating category with data:', { id, categorie, imagePath });
-    if (req.file) {
-      console.log('File uploaded:', req.file.filename, 'at path:', path.join(__dirname, '..', 'uploads', req.file.filename));
-    }
+    console.log('Updating category with data:', { id, categorie, imagePath, existingImage: image });
 
     if (!categorie || categorie.trim() === "") {
       return res.status(400).json({ error: "Category name is required" });
     }
 
+    // Validate existing image if no new file is uploaded
+    if (!req.file && image) {
+      const normalizedImage = image.startsWith('/uploads/') ? image : `/uploads/${path.basename(image)}`;
+      const fullPath = path.join(UPLOADS_DIR, path.basename(normalizedImage));
+      if (!fs.existsSync(fullPath)) {
+        console.warn('Existing image file not found:', fullPath);
+        imagePath = null;
+      } else {
+        imagePath = normalizedImage;
+      }
+    }
+
+    // Fetch current category to get old image path
     db.query(
-      "UPDATE menu SET categorie = ?, image = ? WHERE id = ?",
-      [categorie, imagePath, parseInt(id)],
-      (err, result) => {
+      "SELECT image FROM menu WHERE id = ?",
+      [parseInt(id)],
+      (err, results) => {
         if (err) {
-          console.error("Error updating category:", err);
-          return res.status(500).json({ error: "Failed to update category" });
+          console.error("Error fetching category:", err);
+          return res.status(500).json({ error: "Failed to fetch category" });
         }
-        if (result.affectedRows === 0) {
+        if (results.length === 0) {
           return res.status(404).json({ error: "Category not found" });
         }
-        res.status(200).json({ message: "Category updated successfully" });
+
+        const oldImage = results[0].image;
+
+        // Delete old image if a new one is uploaded
+        if (req.file && oldImage && oldImage !== imagePath) {
+          const oldImagePath = path.join(UPLOADS_DIR, path.basename(oldImage));
+          try {
+            if (fs.existsSync(oldImagePath)) {
+              fs.unlinkSync(oldImagePath);
+              console.log('Deleted old image:', oldImagePath);
+            }
+          } catch (err) {
+            console.error('Error deleting old image:', err);
+          }
+        }
+
+        // Update category
+        db.query(
+          "UPDATE menu SET categorie = ?, image = ? WHERE id = ?",
+          [categorie, imagePath, parseInt(id)],
+          (err, result) => {
+            if (err) {
+              console.error("Error updating category:", err);
+              return res.status(500).json({ error: "Failed to update category" });
+            }
+            if (result.affectedRows === 0) {
+              return res.status(404).json({ error: "Category not found" });
+            }
+            console.log('Category updated successfully:', { id, categorie, imagePath });
+            res.status(200).json({ message: "Category updated successfully" });
+          }
+        );
       }
     );
   }
@@ -131,22 +147,54 @@ exports.updateCategory = [
 exports.deleteCategory = (req, res) => {
   const { id } = req.params;
 
-  // First, delete associated items
-  db.query("DELETE FROM items WHERE category_id = ?", [parseInt(id)], (err) => {
-    if (err) {
-      console.error("Error deleting associated items:", err);
-      return res.status(500).json({ error: "Failed to delete associated items" });
-    }
-    // Then delete the category
-    db.query("DELETE FROM menu WHERE id = ?", [parseInt(id)], (err, result) => {
+  // Fetch current category to get image path
+  db.query(
+    "SELECT image FROM menu WHERE id = ?",
+    [parseInt(id)],
+    (err, results) => {
       if (err) {
-        console.error("Error deleting category:", err);
-        return res.status(500).json({ error: "Failed to delete category" });
+        console.error("Error fetching category:", err);
+        return res.status(500).json({ error: "Failed to fetch category" });
       }
-      if (result.affectedRows === 0) {
+      if (results.length === 0) {
         return res.status(404).json({ error: "Category not found" });
       }
-      res.status(200).json({ message: "Category deleted successfully" });
-    });
-  });
+
+      const image = results[0].image;
+
+      // Delete associated items
+      db.query("DELETE FROM items WHERE category_id = ?", [parseInt(id)], (err) => {
+        if (err) {
+          console.error("Error deleting associated items:", err);
+          return res.status(500).json({ error: "Failed to delete associated items" });
+        }
+
+        // Delete the category
+        db.query("DELETE FROM menu WHERE id = ?", [parseInt(id)], (err, result) => {
+          if (err) {
+            console.error("Error deleting category:", err);
+            return res.status(500).json({ error: "Failed to delete category" });
+          }
+          if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Category not found" });
+          }
+
+          // Delete image file if it exists
+          if (image) {
+            const imagePath = path.join(UPLOADS_DIR, path.basename(image));
+            try {
+              if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+                console.log('Deleted category image:', imagePath);
+              }
+            } catch (err) {
+              console.error('Error deleting category image:', err);
+            }
+          }
+
+          res.status(200).json({ message: "Category deleted successfully" });
+        });
+      });
+    }
+  );
 };

@@ -1,33 +1,5 @@
 const db = require('../databasemenu');
 
-const createTableIfNotExists = () => {
-  return new Promise((resolve, reject) => {
-    const createQuery = `
-      CREATE TABLE IF NOT EXISTS footer_settings (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        type VARCHAR(50) NOT NULL,
-        label VARCHAR(100) NOT NULL,
-        value TEXT NOT NULL,
-        display_name VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `;
-    
-    db.query(createQuery, (err) => {
-      if (err) {
-        console.error('Error creating footer_settings table:', err);
-        return reject(err);
-      }
-      console.log('Footer settings table exists or was created successfully');
-      resolve();
-    });
-  });
-};
-
-// Initialize table if it doesn't exist
-createTableIfNotExists().catch(console.error);
-
 // Get all footer settings
 exports.getFooterSettings = (req, res) => {
   db.query('SELECT * FROM footer_settings', (err, results) => {
@@ -46,6 +18,9 @@ exports.getFooterSettings = (req, res) => {
       },
       location: {
         address: []
+      },
+      features: {
+        callWaiterEnabled: true // default true if not set
       }
     };
     
@@ -66,6 +41,8 @@ exports.getFooterSettings = (req, res) => {
         if (setting.label === 'address') {
           settings.location.address.push(setting.value);
         }
+      } else if (setting.type === 'feature' && setting.label === 'callWaiterEnabled') {
+        settings.features.callWaiterEnabled = setting.value === 'true';
       }
     });
     
@@ -122,6 +99,11 @@ exports.updateFooterSettings = (req, res) => {
           values.push(['location', key, value, null]);
         }
       });
+    }
+    
+    // Add features (callWaiterEnabled)
+    if (settings.features && typeof settings.features.callWaiterEnabled !== 'undefined') {
+      values.push(['feature', 'callWaiterEnabled', settings.features.callWaiterEnabled ? 'true' : 'false', null]);
     }
     
     if (values.length === 0) {

@@ -16,8 +16,15 @@ function Admins() {
   const { t, i18n } = useTranslation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('admins-section');
+  const [categoryKey, setCategoryKey] = useState(0); // State to force re-render of dependent components
   const navigate = useNavigate();
   const mainContentRef = useRef(null);
+
+  // Function to handle category changes
+  const handleCategoryChange = () => {
+    console.log('Category changed, refreshing dependent components');
+    setCategoryKey((prev) => prev + 1); // Increment key to force re-render
+  };
 
   const scrollToSection = (sectionId) => {
     setTimeout(() => {
@@ -257,8 +264,8 @@ function Admins() {
           >
             <div className="max-w-7xl mx-auto space-y-8">
               <AdminManagement mainContentRef={mainContentRef} />
-              <CategoryManagement mainContentRef={mainContentRef} />
-              <ItemManagement mainContentRef={mainContentRef} />
+              <CategoryManagement mainContentRef={mainContentRef} onCategoryChange={handleCategoryChange} />
+              <ItemManagement mainContentRef={mainContentRef} categoryKey={categoryKey} />
               <TableManagement />
               <CallWaiterManagement />
               <FeedbackManagement />

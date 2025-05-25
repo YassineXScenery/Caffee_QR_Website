@@ -26,6 +26,7 @@ function MenuDisplay() {
   const [callWaiterSuccess, setCallWaiterSuccess] = useState(null);
   const [isCallWaiterDisabled, setIsCallWaiterDisabled] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
+  const [callWaiterEnabled, setCallWaiterEnabled] = useState(true);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -95,6 +96,11 @@ function MenuDisplay() {
         localStorage.removeItem('callWaiterCooldownEnd');
       }
     }
+
+    // Fetch callWaiterEnabled flag
+    axios.get(`${API_URL}/footer`).then(res => {
+      setCallWaiterEnabled(res.data?.features?.callWaiterEnabled !== false);
+    });
   }, []);
 
   const toggleCategory = (category) => {
@@ -192,28 +198,29 @@ function MenuDisplay() {
                 </p>
                 {localStorage.getItem('token') && <NotificationBell />}
               </div>
-              
-              <button
-                onClick={() => setShowDialog(true)}
-                disabled={isCallWaiterDisabled}
-                className={`mt-6 px-6 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all flex items-center mx-auto shadow-md ${
-                  isCallWaiterDisabled 
-                    ? 'bg-blue-300 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                <FiBell className="h-5 w-5 mr-2" />
-                {isCallWaiterDisabled ? t('callWaiterCooldown', { time: cooldownTime }) : t('callWaiter')}
-              </button>
-              
-              {callWaiterSuccess && (
-                <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md mx-auto animate-fade-in">
-                  <p className="text-sm text-green-600">{callWaiterSuccess}</p>
-                </div>
+              {callWaiterEnabled && (
+                <>
+                  <button
+                    onClick={() => setShowDialog(true)}
+                    disabled={isCallWaiterDisabled}
+                    className={`mt-6 px-6 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all flex items-center mx-auto shadow-md ${
+                      isCallWaiterDisabled 
+                        ? 'bg-blue-300 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    <FiBell className="h-5 w-5 mr-2" />
+                    {isCallWaiterDisabled ? t('callWaiterCooldown', { time: cooldownTime }) : t('callWaiter')}
+                  </button>
+                  {callWaiterSuccess && (
+                    <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md mx-auto animate-fade-in">
+                      <p className="text-sm text-green-600">{callWaiterSuccess}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
-
-            {showDialog && (
+            {callWaiterEnabled && showDialog && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
                   <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('callWaiterDialogTitle')}</h2>

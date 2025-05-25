@@ -1,16 +1,19 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../databasemenu');
+const path = require('path');
+const fs = require('fs');
+const { UPLOADS_DIR } = require('../config/paths');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Middleware to verify JWT token
 exports.verifyToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1]; // Expecting "Bearer <token>"
+  const token = req.headers['authorization']?.split(' ')[1];
 
-  console.log('Verifying token for request:', req.method, req.url); // Debug: Log the request
-  console.log('Token received:', token); // Debug: Log the token
+  console.log('Verifying token for request:', req.method, req.url);
+  console.log('Token received:', token);
 
   if (!token) {
     console.log('No token provided');
@@ -19,7 +22,7 @@ exports.verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Token decoded:', decoded); // Debug: Log the decoded token
+    console.log('Token decoded:', decoded);
     req.user = decoded;
     next();
   } catch (err) {
@@ -68,7 +71,7 @@ exports.loginAdmin = async (req, res) => {
       const token = jwt.sign(
         { id: admin.id, username: admin.username },
         JWT_SECRET,
-        { expiresIn: '24h' } // Extend expiration to 24 hours
+        { expiresIn: '24h' }
       );
 
       // Login successful
@@ -78,7 +81,8 @@ exports.loginAdmin = async (req, res) => {
         token,
         admin: {
           id: admin.id,
-          username: admin.username
+          username: admin.username,
+          photo: admin.photo || null
         }
       });
     });
@@ -91,12 +95,36 @@ exports.loginAdmin = async (req, res) => {
 // Get all admins
 exports.getAllAdmins = async (req, res) => {
   try {
-    db.query("SELECT id, username FROM admins", (err, results) => {
+    db.query("SELECT id, username, photo FROM admins", (err, results) => {
       if (err) {
         console.error('Error fetching admins:', err);
         return res.status(500).json({ error: 'Failed to fetch admins' });
       }
-      res.status(200).json(results);
+      // Map results to ensure photo URLs are correct
+      const adminsWithPhotos = results.map(admin => {
+        let photoPath = null;
+        if (admin.photo) {
+          // Ensure the photo path starts with /uploads/
+          photoPath = admin.photo.startsWith('/uploads/') ? 
+            admin.photo : 
+            `/uploads/${path.basename(admin.photo)}`;
+            
+          // Verify file exists
+          const fullPath = path.join(UPLOADS_DIR, path.basename(photoPath));
+          if (!fs.existsSync(fullPath)) {
+            console.warn(`Photo file not found for admin ${admin.username}:`, fullPath);
+            photoPath = null;
+          }
+        }
+        console.log(`Processing admin ${admin.username} with photo path:`, photoPath);
+        return {
+          ...admin,
+          photo: photoPath
+        };
+      });
+      
+      console.log('Returning admins with photos:', adminsWithPhotos);
+      res.json(adminsWithPhotos);
     });
   } catch (err) {
     console.error('Unexpected error:', err);
@@ -106,7 +134,7 @@ exports.getAllAdmins = async (req, res) => {
 
 // Add a new admin
 exports.addAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, photo } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
@@ -114,9 +142,22 @@ exports.addAdmin = async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Validate photo path if provided
+    let photoPath = null;
+    if (photo) {
+      if (photo.startsWith('/uploads/')) {
+        const fullPath = path.join(UPLOADS_DIR, path.basename(photo));
+        if (!fs.existsSync(fullPath)) {
+          return res.status(400).json({ error: 'Photo file not found' });
+        }
+        photoPath = photo;
+      }
+    }
+
     db.query(
-      "INSERT INTO admins (username, password) VALUES (?, ?)",
-      [username, hashedPassword],
+      "INSERT INTO admins (username, password, photo) VALUES (?, ?, ?)",
+      [username, hashedPassword, photoPath],
       (err, result) => {
         if (err) {
           console.error('Error adding admin:', err);
@@ -134,7 +175,9 @@ exports.addAdmin = async (req, res) => {
 // Modify an admin
 exports.modifyAdmin = async (req, res) => {
   const { id } = req.params;
-  const { username, password } = req.body;
+  const { username, password, photo } = req.body;
+
+  console.log('Update request received:', { id, username, photo });
 
   try {
     db.query("SELECT * FROM admins WHERE id = ?", [id], async (err, results) => {
@@ -146,9 +189,52 @@ exports.modifyAdmin = async (req, res) => {
         return res.status(404).json({ error: 'Admin not found' });
       }
 
+      const admin = results[0];
       const updates = {};
       if (username) updates.username = username;
       if (password) updates.password = await bcrypt.hash(password, 10);
+
+      // Handle photo updates
+      if (typeof photo !== 'undefined') {
+        if (photo === null) {
+          // Remove existing photo
+          if (admin.photo) {
+            const oldPhotoPath = path.join(UPLOADS_DIR, path.basename(admin.photo));
+            try {
+              if (fs.existsSync(oldPhotoPath)) {
+                fs.unlinkSync(oldPhotoPath);
+                console.log('Deleted old photo:', oldPhotoPath);
+              }
+            } catch (err) {
+              console.error('Error deleting old photo:', err);
+            }
+          }
+          updates.photo = null;
+        } else {
+          // Validate new photo path
+          const normalizedPhoto = photo.startsWith('/uploads/') ? photo : `/uploads/${path.basename(photo)}`;
+          const fullPath = path.join(UPLOADS_DIR, path.basename(normalizedPhoto));
+          if (fs.existsSync(fullPath)) {
+            // Delete old photo if it exists and is different
+            if (admin.photo && admin.photo !== normalizedPhoto) {
+              const oldPhotoPath = path.join(UPLOADS_DIR, path.basename(admin.photo));
+              try {
+                if (fs.existsSync(oldPhotoPath)) {
+                  fs.unlinkSync(oldPhotoPath);
+                  console.log('Deleted old photo:', oldPhotoPath);
+                }
+              } catch (err) {
+                console.error('Error deleting old photo:', err);
+              }
+            }
+            updates.photo = normalizedPhoto;
+          } else {
+            return res.status(400).json({ error: 'Photo file not found' });
+          }
+        }
+      }
+
+      console.log('Photo field being processed for update:', updates.photo);
 
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ error: 'No updates provided' });

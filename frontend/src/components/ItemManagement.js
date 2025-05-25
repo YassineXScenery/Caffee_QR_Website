@@ -85,10 +85,25 @@ function ItemManagement({ mainContentRef }) {
       formData.append('name', itemName);
       formData.append('category_id', parseInt(categoryId));
       formData.append('price', parsedPrice);
+
+      // Log for debugging
+      console.log('FormData before append:', {
+        name: itemName,
+        category_id: parseInt(categoryId),
+        price: parsedPrice,
+        hasImage: !!itemImage,
+        existingImage: editingItem?.image
+      });      // Handle image upload
       if (itemImage) {
+        console.log('Appending new image file:', {
+          name: itemImage.name,
+          type: itemImage.type,
+          size: itemImage.size
+        });
         formData.append('image', itemImage);
-      } else if (editingItem) {
-        formData.append('image', editingItem.image || '');
+      } else if (editingItem?.image) {
+        console.log('Keeping existing image path:', editingItem.image);
+        formData.append('image', editingItem.image);
       }
 
       if (editingItem) {

@@ -1,44 +1,48 @@
 const db = require("../databasemenu");
-const multer = require('multer');
+const upload = require('../uploadMiddleware');
 const path = require('path');
-
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'uploads'); // Go up one directory to backend/uploads
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only .jpeg, .jpg, and .png files are allowed!'));
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
+const fs = require('fs');
 
 // CREATE
 exports.createItem = [
+  (req, res, next) => {
+    console.log('Pre-upload middleware:', {
+      body: req.body,
+      files: req.files,
+      headers: req.headers
+    });
+    next();
+  },
   upload.single('image'),
   (req, res) => {
+    console.log('Post-upload middleware:', {
+      body: req.body,
+      file: req.file,
+      headers: req.headers
+    });
+    
     const { name, category_id, price } = req.body;
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-    console.log('Creating item with data:', { name, category_id, price, imagePath });
     if (req.file) {
-      console.log('File uploaded:', req.file.filename, 'at path:', path.join(__dirname, '..', 'uploads', req.file.filename));
+      const fullPath = path.join(__dirname, '..', 'uploads', req.file.filename);
+      console.log('File upload details:', {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path,
+        fullPath,
+        exists: fs.existsSync(fullPath)
+      });
+
+      // Verify file is readable
+      try {
+        const stats = fs.statSync(fullPath);
+        console.log('File stats:', stats);
+      } catch (err) {
+        console.error('Error reading uploaded file:', err);
+      }
     }
 
     // Check if fields are missing or invalid
@@ -135,8 +139,9 @@ exports.updateItem = [
   upload.single('image'),
   (req, res) => {
     const { id } = req.params;
-    const { name, category_id, price } = req.body;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : req.body.image;
+    const { name, category_id, price, image } = req.body;
+    // If a new file is uploaded, use that path. Otherwise keep the existing path if provided
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : (image || null);
 
     console.log('Updating item with data:', { id, name, category_id, price, imagePath });
     if (req.file) {
