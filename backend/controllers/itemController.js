@@ -22,7 +22,7 @@ exports.createItem = [
     });
     
     const { name, category_id, price } = req.body;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+    const imagePath = req.file ? `uploads/${req.file.filename}` : null;
 
     if (req.file) {
       const fullPath = path.join(__dirname, '..', 'uploads', req.file.filename);
@@ -36,7 +36,6 @@ exports.createItem = [
         exists: fs.existsSync(fullPath)
       });
 
-      // Verify file is readable
       try {
         const stats = fs.statSync(fullPath);
         console.log('File stats:', stats);
@@ -45,7 +44,6 @@ exports.createItem = [
       }
     }
 
-    // Check if fields are missing or invalid
     if (typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({ error: "A valid item name is required" });
     }
@@ -88,8 +86,13 @@ exports.getItems = (req, res) => {
         console.error("Error retrieving items:", err);
         return res.status(500).json({ error: "Failed to retrieve items" });
       }
-      console.log("Items retrieved:", results);
-      res.status(200).json(results);
+      const items = results.map(item => ({
+        ...item,
+        price: Number(item.price),
+        image: item.image ? `uploads/${path.basename(item.image)}` : null
+      }));
+      console.log("Items retrieved:", items);
+      res.status(200).json(items);
     }
   );
 };
@@ -105,8 +108,13 @@ exports.getItemsBasic = (req, res) => {
         console.error("Error retrieving items (basic):", err);
         return res.status(500).json({ error: "Failed to retrieve items" });
       }
-      console.log("Items (basic) retrieved:", results);
-      res.status(200).json(results);
+      const items = results.map(item => ({
+        ...item,
+        price: Number(item.price),
+        image: item.image ? `uploads/${path.basename(item.image)}` : null
+      }));
+      console.log("Items (basic) retrieved:", items);
+      res.status(200).json(items);
     }
   );
 };
@@ -129,7 +137,12 @@ exports.getItemById = (req, res) => {
       if (results.length === 0) {
         return res.status(404).json({ error: "Item not found" });
       }
-      res.status(200).json(results[0]);
+      const item = {
+        ...results[0],
+        price: Number(results[0].price),
+        image: results[0].image ? `uploads/${path.basename(results[0].image)}` : null
+      };
+      res.status(200).json(item);
     }
   );
 };
@@ -140,15 +153,13 @@ exports.updateItem = [
   (req, res) => {
     const { id } = req.params;
     const { name, category_id, price, image } = req.body;
-    // If a new file is uploaded, use that path. Otherwise keep the existing path if provided
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : (image || null);
+    const imagePath = req.file ? `uploads/${req.file.filename}` : (image || null);
 
     console.log('Updating item with data:', { id, name, category_id, price, imagePath });
     if (req.file) {
       console.log('File uploaded:', req.file.filename, 'at path:', path.join(__dirname, '..', 'uploads', req.file.filename));
     }
 
-    // Check if fields are missing or invalid
     if (typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({ error: "A valid item name is required" });
     }

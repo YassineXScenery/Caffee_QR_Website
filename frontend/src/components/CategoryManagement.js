@@ -4,7 +4,7 @@ import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage } from 'react-icons/fi
 import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
-const BASE_URL = API_URL.replace('/api', '');
+const BASE_URL = API_URL.replace('/api', '') + '/';
 
 function CategoryManagement({ onCategoryChange = () => {}, mainContentRef }) {
   const { t } = useTranslation();

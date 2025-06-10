@@ -4,7 +4,7 @@ import { FiTag, FiDollarSign, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiImage }
 import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
-const BASE_URL = API_URL.replace('/api', '');
+const BASE_URL = API_URL.replace('/api', '') + '/';
 
 function ItemManagement({ mainContentRef }) {
   const { t, i18n } = useTranslation();
@@ -86,14 +86,14 @@ function ItemManagement({ mainContentRef }) {
       formData.append('category_id', parseInt(categoryId));
       formData.append('price', parsedPrice);
 
-      // Log for debugging
       console.log('FormData before append:', {
         name: itemName,
         category_id: parseInt(categoryId),
         price: parsedPrice,
         hasImage: !!itemImage,
         existingImage: editingItem?.image
-      });      // Handle image upload
+      });
+
       if (itemImage) {
         console.log('Appending new image file:', {
           name: itemImage.name,
@@ -166,10 +166,9 @@ function ItemManagement({ mainContentRef }) {
     setEditingItem(item);
     setItemName(item.name);
     setCategoryId(item.category_id.toString());
-    setPrice(item.price.toString());
+    setPrice(item.price != null ? item.price.toString() : '');
     setItemImage(null);
 
-    // Debugging logs
     console.log('Starting to edit item:', item);
 
     setTimeout(() => {
@@ -182,7 +181,6 @@ function ItemManagement({ mainContentRef }) {
         const elementTop = formSection.getBoundingClientRect().top;
         const scrollPosition = elementTop - mainContentTop + container.scrollTop - headerOffset;
 
-        // Debugging logs
         console.log('Scrolling to items-section within container:', {
           scrollPosition,
           headerOffset,
@@ -224,7 +222,8 @@ function ItemManagement({ mainContentRef }) {
       </h1>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
-        <div className="p-6">          <h2 className="text-lg font-medium text-gray-800 mb-4" id="item-form">
+        <div className="p-6">
+          <h2 className="text-lg font-medium text-gray-800 mb-4" id="item-form">
             {editingItem ? t('editItem') : t('addNewItem')}
           </h2>
           <form onSubmit={handleSubmitItem}>
@@ -421,7 +420,9 @@ function ItemManagement({ mainContentRef }) {
                   <div className="w-full h-full flex items-center justify-center">
                     <FiImage className="h-10 w-10 text-gray-400" />
                   </div>
-                )}                <div className="absolute top-1.5 right-1.5 flex space-x-1">                  <button
+                )}
+                <div className="absolute top-1.5 right-1.5 flex space-x-1">
+                  <button
                     onClick={(e) => {
                       e.preventDefault();
                       startEditingItem(item);
@@ -445,8 +446,14 @@ function ItemManagement({ mainContentRef }) {
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-xs text-gray-500">{item.categorie}</span>
                   <div className="flex items-center">
-                    <span className="font-bold">{item.price.toFixed(2)}</span>
-                    <span className="ml-1 text-blue-500 font-medium">DT</span>
+                    {item.price != null && !isNaN(Number(item.price)) ? (
+                      <>
+                        <span className="font-bold">{Number(item.price).toFixed(2)}</span>
+                        <span className="ml-1 text-blue-500 font-medium">DT</span>
+                      </>
+                    ) : (
+                      <span className="text-red-500 text-xs">{t('invalidPrice')}</span>
+                    )}
                   </div>
                 </div>
               </div>

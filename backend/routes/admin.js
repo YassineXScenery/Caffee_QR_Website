@@ -27,7 +27,7 @@ router.post('/upload-photo', adminController.verifyToken, upload.single('photo')
   }
   try {
     // Store the relative path for the image
-    const photoUrl = `/uploads/${req.file.filename}`;
+    const photoUrl = `uploads/${req.file.filename}`;
     console.log('Generated photo URL:', photoUrl);
 
     // Verify the file exists and is readable

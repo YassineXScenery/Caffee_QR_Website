@@ -9,7 +9,7 @@ exports.createCategory = [
   upload.single('image'),
   (req, res) => {
     const { categorie } = req.body;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+    const imagePath = req.file ? `uploads/${req.file.filename}` : null;
 
     console.log('Creating category with data:', { categorie, imagePath });
     if (req.file) {
@@ -43,8 +43,12 @@ exports.getCategories = (req, res) => {
       console.error("Error retrieving categories:", err);
       return res.status(500).json({ error: "Failed to retrieve categories" });
     }
-    console.log("Categories retrieved:", results);
-    res.status(200).json(results);
+    const categories = results.map(category => ({
+      ...category,
+      image: category.image ? `uploads/${path.basename(category.image)}` : null
+    }));
+    console.log("Categories retrieved:", categories);
+    res.status(200).json(categories);
   });
 };
 
@@ -63,7 +67,11 @@ exports.getCategoryById = (req, res) => {
       if (results.length === 0) {
         return res.status(404).json({ error: "Category not found" });
       }
-      res.status(200).json(results[0]);
+      const category = {
+        ...results[0],
+        image: results[0].image ? `uploads/${path.basename(results[0].image)}` : null
+      };
+      res.status(200).json(category);
     }
   );
 };
@@ -74,7 +82,7 @@ exports.updateCategory = [
   (req, res) => {
     const { id } = req.params;
     const { categorie, image } = req.body;
-    let imagePath = req.file ? `/uploads/${req.file.filename}` : (image || null);
+    let imagePath = req.file ? `uploads/${req.file.filename}` : (image || null);
 
     console.log('Updating category with data:', { id, categorie, imagePath, existingImage: image });
 
@@ -84,7 +92,7 @@ exports.updateCategory = [
 
     // Validate existing image if no new file is uploaded
     if (!req.file && image) {
-      const normalizedImage = image.startsWith('/uploads/') ? image : `/uploads/${path.basename(image)}`;
+      const normalizedImage = image.startsWith('uploads/') ? image : `uploads/${path.basename(image)}`;
       const fullPath = path.join(UPLOADS_DIR, path.basename(normalizedImage));
       if (!fs.existsSync(fullPath)) {
         console.warn('Existing image file not found:', fullPath);
@@ -194,7 +202,7 @@ exports.deleteCategory = (req, res) => {
 
           res.status(200).json({ message: "Category deleted successfully" });
         });
-      });
-    }
-  );
-};
+      }
+    );
+  }
+);};

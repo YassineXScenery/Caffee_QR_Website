@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 const API_URL = 'http://localhost:3000/api';
-const BASE_URL = API_URL.replace('/api', '');
+const BASE_URL = API_URL.replace('/api', '') + '/';
 
 function MainApp() {
   const { t } = useTranslation();
@@ -28,10 +28,17 @@ function MainApp() {
       }
 
       try {
-        // Decode JWT token to get username and id
-        const decoded = jwtDecode(token);
-        console.log('Decoded token:', decoded); // Debug log
-        const userId = decoded.id || decoded.sub; // Adjust based on token payload
+        // Validate and decode JWT token
+        let decoded;
+        try {
+          decoded = jwtDecode(token);
+        } catch (error) {
+          console.error('Invalid token:', error);
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        const userId = decoded.id || decoded.sub;
         const username = decoded.username || 'Admin';
 
         // Fetch admins to get photo
@@ -44,17 +51,18 @@ function MainApp() {
           (admin) => admin.id === userId || admin.username === username
         );
 
+        if (!currentAdmin) {
+          throw new Error('Admin not found');
+        }
+
         setUserData({
           username: username,
           photo: currentAdmin?.photo ? `${BASE_URL}${currentAdmin.photo}` : null,
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem('token');
-          navigate('/login');
-        }
-        setUserData({ username: 'Admin', photo: null });
+        localStorage.removeItem('token');
+        navigate('/login');
       } finally {
         setIsLoadingUser(false);
       }
@@ -69,7 +77,13 @@ function MainApp() {
 
   const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('token');
-    return token ? children : <Navigate to="/login" />;
+    if (!token) {
+      return <Navigate to="/login" />;
+    }
+    if (isLoadingUser) {
+      return <div className="p-4 text-center text-gray-600">{t('loading')}</div>;
+    }
+    return children;
   };
 
   return (

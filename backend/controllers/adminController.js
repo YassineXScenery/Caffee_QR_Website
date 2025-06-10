@@ -82,7 +82,7 @@ exports.loginAdmin = async (req, res) => {
         admin: {
           id: admin.id,
           username: admin.username,
-          photo: admin.photo || null
+          photo: admin.photo ? `uploads/${path.basename(admin.photo)}` : null
         }
       });
     });
@@ -104,11 +104,7 @@ exports.getAllAdmins = async (req, res) => {
       const adminsWithPhotos = results.map(admin => {
         let photoPath = null;
         if (admin.photo) {
-          // Ensure the photo path starts with /uploads/
-          photoPath = admin.photo.startsWith('/uploads/') ? 
-            admin.photo : 
-            `/uploads/${path.basename(admin.photo)}`;
-            
+          photoPath = `uploads/${path.basename(admin.photo)}`;
           // Verify file exists
           const fullPath = path.join(UPLOADS_DIR, path.basename(photoPath));
           if (!fs.existsSync(fullPath)) {
@@ -146,13 +142,12 @@ exports.addAdmin = async (req, res) => {
     // Validate photo path if provided
     let photoPath = null;
     if (photo) {
-      if (photo.startsWith('/uploads/')) {
-        const fullPath = path.join(UPLOADS_DIR, path.basename(photo));
-        if (!fs.existsSync(fullPath)) {
-          return res.status(400).json({ error: 'Photo file not found' });
-        }
-        photoPath = photo;
+      const normalizedPhoto = `uploads/${path.basename(photo)}`;
+      const fullPath = path.join(UPLOADS_DIR, path.basename(normalizedPhoto));
+      if (!fs.existsSync(fullPath)) {
+        return res.status(400).json({ error: 'Photo file not found' });
       }
+      photoPath = normalizedPhoto;
     }
 
     db.query(
@@ -212,7 +207,7 @@ exports.modifyAdmin = async (req, res) => {
           updates.photo = null;
         } else {
           // Validate new photo path
-          const normalizedPhoto = photo.startsWith('/uploads/') ? photo : `/uploads/${path.basename(photo)}`;
+          const normalizedPhoto = `uploads/${path.basename(photo)}`;
           const fullPath = path.join(UPLOADS_DIR, path.basename(normalizedPhoto));
           if (fs.existsSync(fullPath)) {
             // Delete old photo if it exists and is different

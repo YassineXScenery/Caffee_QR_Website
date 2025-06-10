@@ -4,6 +4,7 @@ import { FiUser, FiEdit2, FiTrash2, FiX, FiCheck, FiPlus } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
+const BASE_URL = API_URL.replace('/api', '') + '/';
 
 function AdminManagement({ mainContentRef }) {
   const { t } = useTranslation();
@@ -174,7 +175,7 @@ function AdminManagement({ mainContentRef }) {
     setUsername(admin.username);
     setPassword('');
     setPhoto(admin.photo || null);
-    setPhotoPreview(admin.photo ? `${API_URL.replace('/api', '')}${admin.photo}` : null);
+    setPhotoPreview(admin.photo ? `${BASE_URL}${admin.photo}` : null);
     console.log('Starting to edit admin:', admin);
 
     setTimeout(() => {
@@ -305,9 +306,9 @@ function AdminManagement({ mainContentRef }) {
                     className="mt-2 h-20 w-20 object-cover rounded-full border"
                   />
                 )}
-                {photo && !photoPreview && (
+                {photo && (
                   <img
-                    src={`${API_URL.replace('/api', '')}${photo}`}
+                    src={`${BASE_URL}${photo}`}
                     alt="Admin"
                     className="mt-2 h-20 w-20 object-cover rounded-full border"
                     onError={handleImageError}
@@ -409,7 +410,7 @@ function AdminManagement({ mainContentRef }) {
                   <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
                     {admin.photo ? (
                       <img 
-                        src={`${API_URL.replace('/api', '')}${admin.photo}`} 
+                        src={`${BASE_URL}${admin.photo}`} 
                         alt={admin.username}
                         onError={handleImageError}
                         className="h-12 w-12 object-cover"

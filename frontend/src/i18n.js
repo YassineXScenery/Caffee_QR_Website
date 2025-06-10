@@ -4,7 +4,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 const resources = {
   en: {
-    translation: {      // General
+    translation: {
+      // General
       settings: 'Settings',
       beta: 'Beta',
       languageSettings: 'Language Settings',
@@ -133,7 +134,8 @@ const resources = {
       address: 'Address',
       facebook: 'Facebook',
       instagram: 'Instagram',
-      twitter: 'Twitter',      // Footer Settings
+      twitter: 'Twitter',
+      // Footer Settings
       footerSettings: 'Footer Settings',
       socialMedia: 'Social Media',
       contactInformation: 'Contact Information',
@@ -361,7 +363,8 @@ const resources = {
       address: 'Adresse',
       facebook: 'Facebook',
       instagram: 'Instagram',
-      twitter: 'Twitter',      // Footer Settings
+      twitter: 'Twitter',
+      // Footer Settings
       footerSettings: 'Paramètres du pied de page',
       socialMedia: 'Réseaux sociaux',
       contactInformation: 'Informations de contact',
@@ -546,14 +549,15 @@ const resources = {
       address: 'العنوان',
       facebook: 'فيسبوك',
       instagram: 'انستغرام',
-      twitter: 'تويتر',      // Footer Settings
+      twitter: 'تويتر',
+      // Footer Settings
       footerSettings: 'إعدادات التذييل',
       socialMedia: 'وسائل التواصل الاجتماعي',
       contactInformation: 'معلومات الاتصال',
       locationInformation: 'معلومات الموقع',
       addSocialMedia: 'إضافة وسائل التواصل الاجتماعي',
       addPhone: 'إضافة رقم هاتف إضافي',
-      addAddress: 'إضافة عنوان إضافي', 
+      addAddress: 'إضافة عنوان إضافي',
       saveSettings: 'حفظ التغييرات',
       enterPhoneNumber: 'أدخل رقم الهاتف',
       enterEmailAddress: 'أدخل البريد الإلكتروني',
@@ -567,7 +571,7 @@ const resources = {
   }
 };
 
-i18n
+const i18nPromise = i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -582,4 +586,4 @@ i18n
     },
   });
 
-export default i18n;
+export { i18n, i18nPromise };
