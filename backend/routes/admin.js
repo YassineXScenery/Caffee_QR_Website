@@ -56,4 +56,6 @@ router.post('/upload-photo', adminController.verifyToken, upload.single('photo')
   }
 });
 
+// All admin management routes are already protected by adminController.verifyToken except login and upload-photo.
+
 module.exports = router;

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../databasemenu');
+const adminController = require('../controllers/adminController');
 
 // Load requests from the database
 const loadRequests = () => {
@@ -34,7 +35,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', (req, res) => {
+// Protect POST (create call-waiter request) with admin authentication, keep GET public
+router.post('/', adminController.verifyToken, (req, res, next) => next(), (req, res) => {
   const { tableNumber } = req.body;
 
   if (!tableNumber || isNaN(tableNumber) || tableNumber < 1) {

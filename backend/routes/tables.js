@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../databasemenu'); // Import the database connection
+const adminController = require('../controllers/adminController');
 
 // Get all tables
 router.get('/', (req, res) => {
@@ -14,7 +15,7 @@ router.get('/', (req, res) => {
 });
 
 // Create new tables
-router.post('/', (req, res) => {
+router.post('/', adminController.verifyToken, (req, res, next) => next(), (req, res) => {
   const { numberOfTables } = req.body;
   if (!numberOfTables || isNaN(numberOfTables) || numberOfTables < 1 || numberOfTables > 100) {
     return res.status(400).json({ error: 'Invalid number of tables. Must be between 1 and 100.' });
@@ -45,7 +46,7 @@ router.post('/', (req, res) => {
 });
 
 // Delete a table
-router.delete('/:tableNumber', (req, res) => {
+router.delete('/:tableNumber', adminController.verifyToken, (req, res, next) => next(), (req, res) => {
   const tableNumber = parseInt(req.params.tableNumber);
   db.query('DELETE FROM tables WHERE table_number = ?', [tableNumber], (err, result) => {
     if (err) {
@@ -60,7 +61,7 @@ router.delete('/:tableNumber', (req, res) => {
 });
 
 // Delete all tables
-router.delete('/', (req, res) => {
+router.delete('/', adminController.verifyToken, (req, res, next) => next(), (req, res) => {
   db.query('DELETE FROM tables', (err, result) => {
     if (err) {
       console.error('Error deleting all tables:', err);

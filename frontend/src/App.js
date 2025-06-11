@@ -3,6 +3,9 @@ import { FiEye, FiHome, FiUser } from 'react-icons/fi';
 import Login from './components/Login';
 import MenuDisplay from './components/MenuDisplay';
 import Admins from './components/Admins';
+import StockPage from './components/StockPage';
+import ExpensePage from './components/ExpensePage';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -153,10 +156,27 @@ function MainApp() {
                   </div>
                 </div>
                 <Admins />
+                {/* Admin Management Tabs */}
+                <div className="flex flex-col gap-6 mt-8">
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <StockPage />
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <ExpensePage />
+                  </div>
+                  {/* Removed duplicate AnalyticsDashboard here to avoid double rendering */}
+                </div>
               </div>
             </ProtectedRoute>
           }
         />
+
+        {/* Admin Stock Management Route */}
+        <Route path="/admin/stock" element={<ProtectedRoute><StockPage /></ProtectedRoute>} />
+        {/* Admin Expense Management Route */}
+        <Route path="/admin/expenses" element={<ProtectedRoute><ExpensePage /></ProtectedRoute>} />
+        {/* Admin Analytics Dashboard Route */}
+        <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
 
         {/* Redirect any unknown routes to the public menu */}
         <Route path="*" element={<Navigate to="/" />} />

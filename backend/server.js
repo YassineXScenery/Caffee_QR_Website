@@ -13,6 +13,9 @@ const categoryRoutes = require('./routes/menu');
 const callWaiterRoutes = require('./routes/call-waiter');
 const feedbackRoutes = require('./routes/feedback'); // Import feedback routes
 const footerRoutes = require('./routes/footer'); // Import footer routes
+const stockRoutes = require('./routes/stock');
+const expensesRoutes = require('./routes/expenses');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 const server = http.createServer(app);
@@ -87,6 +90,9 @@ app.use('/api/menu', categoryRoutes);
 app.use('/api/call-waiter', callWaiterRoutes);
 app.use('/api/feedback', feedbackRoutes); // Mount feedback routes
 app.use('/api/footer', footerRoutes); // Mount footer routes
+app.use('/api/stock', stockRoutes);
+app.use('/api/expenses', expensesRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -105,6 +111,61 @@ schedule.scheduleJob('0 0 * * *', () => {
       console.log('Old call waiter requests cleaned up');
     }
   });
+});
+
+// Schedule processing of recurring expenses (daily at 1:00 AM)
+schedule.scheduleJob('0 1 * * *', async () => {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  db.query(
+    `SELECT * FROM expenses WHERE is_recurring = 1 AND active = 1 AND recurring_next_due_date IS NOT NULL AND recurring_next_due_date <= ?`,
+    [todayStr],
+    (err, recs) => {
+      if (err) {
+        console.error('Error fetching recurring expenses:', err);
+        return;
+      }
+      if (!recs.length) return;
+      recs.forEach(rec => {
+        // Insert a new expense instance (not recurring, just a record)
+        db.query(
+          'INSERT INTO expenses (type, amount, description, expense_date, is_recurring) VALUES (?, ?, ?, ?, 0)',
+          [rec.type, rec.amount, rec.description || '', rec.recurring_next_due_date],
+          (err) => {
+            if (err) console.error('Error inserting recurring expense instance:', rec.id, err);
+          }
+        );
+        // Calculate next due date
+        let nextDue = new Date(rec.recurring_next_due_date);
+        switch (rec.recurring_frequency) {
+          case 'daily':
+            nextDue.setDate(nextDue.getDate() + 1);
+            break;
+          case 'weekly':
+            nextDue.setDate(nextDue.getDate() + 7);
+            break;
+          case 'monthly':
+            nextDue.setMonth(nextDue.getMonth() + 1);
+            break;
+          case 'yearly':
+            nextDue.setFullYear(nextDue.getFullYear() + 1);
+            break;
+        }
+        // If recurring_end_date exists and nextDue > recurring_end_date, deactivate
+        let deactivate = false;
+        if (rec.recurring_end_date && nextDue > new Date(rec.recurring_end_date)) {
+          deactivate = true;
+        }
+        db.query(
+          'UPDATE expenses SET recurring_next_due_date = ?, active = ? WHERE id = ?',
+          [nextDue.toISOString().slice(0, 10), deactivate ? 0 : 1, rec.id],
+          (err) => {
+            if (err) console.error('Error updating recurring expense:', rec.id, err);
+          }
+        );
+      });
+    }
+  );
 });
 
 app.get('/', (req, res) => {
