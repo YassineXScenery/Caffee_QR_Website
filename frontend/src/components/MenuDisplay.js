@@ -5,6 +5,7 @@ import { NotificationProvider } from '../context/NotificationContext';
 import NotificationBell from './NotificationBell';
 import Footer from './Footer';
 import { useTranslation } from 'react-i18next';
+import './MenuDisplay.css';
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '') + '/';
@@ -194,7 +195,7 @@ function MenuDisplay() {
     <NotificationProvider>
       <div
         dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
-        className="min-h-screen flex flex-col"
+        className="min-h-screen flex flex-col menu-animate-fade-in"
       >
         <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 bg-blue-50">
           <div className="max-w-7xl mx-auto">
@@ -315,8 +316,8 @@ function MenuDisplay() {
 
             {!isLoading && Object.keys(menu).length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(menu).map(([category, items]) => (
-                  <div key={category} className="transform hover:-translate-y-1 transition-transform duration-300">
+                {Object.entries(menu).map(([category, items], idx) => (
+                  <div key={category} className="transform hover:-translate-y-1 transition-transform duration-300 menu-animate-slide-up" style={{animationDelay: `${0.08 * idx}s`}}>
                     <button
                       onClick={() => toggleCategory(category)}
                       className={`w-full flex items-center p-6 text-left transition-all duration-300 rounded-t-2xl shadow-md
@@ -356,10 +357,11 @@ function MenuDisplay() {
                     >
                       <div className="p-6 pt-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {items.map((item) => (
+                          {items.map((item, itemIdx) => (
                             <div
                               key={item.id}
-                              className="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-[1.02] transition-transform duration-300"
+                              className="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 menu-animate-pop"
+                              style={{animationDelay: `${0.05 * itemIdx}s`}}
                             >
                               <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                                 {item.image ? (

@@ -173,240 +173,202 @@ function SettingsPanel() {
     setIsSettingsOpen(!isSettingsOpen);
   };
 
-  const toggleSection = (section) => {
-    setOpenSection(prev => (prev === section ? null : section));
-  };
-
-  useEffect(() => {
-    if (!isSettingsOpen) {
-      setOpenSection(null);
-    }
-  }, [isSettingsOpen]);
-
   return (
-    <div id="settings-section" className="mb-16 px-4 sm:px-0">
-      {/* Settings Toggle Button */}
-      <button 
-        onClick={toggleSettings}
-        className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-4 hover:bg-gray-50 transition-all duration-200"
+    <div className="relative max-w-3xl mx-auto py-8">
+      <button
+        className="fixed top-6 left-6 z-50 bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        onClick={() => window.history.back()}
       >
-        <div className="flex items-center">
-          <FiSettings className="text-xl mr-2 text-gray-600" />
-          <span className="font-medium text-gray-800">{t('settings')}</span>
-        </div>
-        {isSettingsOpen ? (
-          <FiChevronUp className="text-xl text-gray-600" />
-        ) : (
-          <FiChevronDown className="text-xl text-gray-600" />
-        )}
+        ← Back
       </button>
-
-      {/* Settings Content */}
-      <div 
-        className={`transform transition-all duration-300 overflow-hidden ${
-          isSettingsOpen 
-            ? 'opacity-100 max-h-[2000px] translate-y-0' 
-            : 'opacity-0 max-h-0 -translate-y-4'
-        }`}
-        dir={selectedLanguage === 'ar' ? 'rtl' : 'ltr'}
-      >
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          {/* Collapsible Language Settings */}
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => toggleSection('language')}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-200 mb-2"
-            >
-              <span className="flex items-center">
-                <FiGlobe className="mr-2" />
-                {t('languageSettings')}
-              </span>
-              {openSection === 'language' ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-            {openSection === 'language' && (
-              <div className="bg-white rounded-lg p-4 border border-gray-100 mt-2">
-                <label htmlFor="language" className="block text-sm font-medium text-gray-600 mb-2">
-                  {t('selectLanguage')}
-                </label>
-                <select
-                  id="language"
-                  value={selectedLanguage}
-                  onChange={handleLanguageChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                >
-                  <option value="en">{t('english')}</option>
-                  <option value="fr">{t('french')}</option>
-                  <option value="ar">{t('arabic')}</option>
-                </select>
-                {/* Error/Success/Save for Language */}
-                {openSection === 'language' && error && (
-                  <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg mt-4">
-                    <p className="text-sm text-red-700">{error}</p>
+      <h2 className="text-3xl font-bold mb-6 text-blue-700">Settings</h2>
+      <div className="space-y-8">
+        {/* Language Settings Collapsible */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <button
+            className="w-full flex justify-between items-center text-lg font-semibold text-blue-700 focus:outline-none"
+            onClick={() => setOpenSection(openSection === 'language' ? null : 'language')}
+          >
+            Language Settings
+            <span>{openSection === 'language' ? <FiChevronUp /> : <FiChevronDown />}</span>
+          </button>
+          {openSection === 'language' && (
+            <div className="mt-4">
+              <label htmlFor="language" className="block text-sm font-medium text-gray-600 mb-2">
+                {t('selectLanguage')}
+              </label>
+              <select
+                id="language"
+                value={selectedLanguage}
+                onChange={handleLanguageChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              >
+                <option value="en">{t('english')}</option>
+                <option value="fr">{t('french')}</option>
+                <option value="ar">{t('arabic')}</option>
+              </select>
+              {/* Error/Success/Save for Language */}
+              {openSection === 'language' && error && (
+                <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg mt-4">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+              {openSection === 'language' && success && (
+                <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg mt-4">
+                  <p className="text-sm text-green-600">{success}</p>
+                </div>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className={`mt-2 px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+                  isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isLoading ? t('saving') : t('saveSettings')}
+              </button>
+            </div>
+          )}
+        </div>
+        {/* Footer Settings Collapsible */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <button
+            className="w-full flex justify-between items-center text-lg font-semibold text-blue-700 focus:outline-none"
+            onClick={() => setOpenSection(openSection === 'footer' ? null : 'footer')}
+          >
+            Footer Settings
+            <span>{openSection === 'footer' ? <FiChevronUp /> : <FiChevronDown />}</span>
+          </button>
+          {openSection === 'footer' && (
+            <div className="mt-4">
+              {/* Social Media */}
+              <div className="mb-6">
+                <h3 className="text-md font-medium text-gray-700 mb-3">{t('socialMedia')}</h3>
+                {footerSettings.social.map((social, index) => (
+                  <div key={index} className="flex gap-4 mb-3">
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <select
+                        value={social.label}
+                        onChange={(e) => handleSocialMediaChange(index, 'label', e.target.value)}
+                        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      >
+                        <option value="">{t('platform')}</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="twitter">Twitter</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={social.display_name || ''}
+                        onChange={(e) => handleSocialMediaChange(index, 'display_name', e.target.value)}
+                        placeholder={t('enterDisplayName')}
+                        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                    <input
+                      type="url"
+                      value={social.value || ''}
+                      onChange={(e) => handleSocialMediaChange(index, 'value', e.target.value)}
+                      placeholder={t('enterLink')}
+                      className="flex-2 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSocialMediaRemove(index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <FiTrash2 className="h-5 w-5" />
+                    </button>
                   </div>
-                )}
-                {openSection === 'language' && success && (
-                  <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg mt-4">
-                    <p className="text-sm text-green-600">{success}</p>
-                  </div>
-                )}
+                ))}
                 <button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className={`mt-2 px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
-                    isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                  type="button"
+                  onClick={handleSocialMediaAdd}
+                  className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 >
-                  {isLoading ? t('saving') : t('saveSettings')}
+                  <FiPlus className="h-5 w-5 mr-1" />
+                  {t('addSocialMedia')}
                 </button>
               </div>
-            )}
-          </div>
 
-          {/* Collapsible Footer Settings */}
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => toggleSection('footer')}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-200 mb-2"
-            >
-              <span className="flex items-center">
-                <FiSettings className="mr-2" />
-                {t('footerSettings')}
-              </span>
-              {openSection === 'footer' ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-            {openSection === 'footer' && (
-              <div className="bg-white rounded-lg p-4 border border-gray-100 mt-2">
-                {/* Social Media */}
-                <div className="mb-6">
-                  <h3 className="text-md font-medium text-gray-700 mb-3">{t('socialMedia')}</h3>
-                  {footerSettings.social.map((social, index) => (
-                    <div key={index} className="flex gap-4 mb-3">
-                      <div className="flex-1 grid grid-cols-2 gap-2">
-                        <select
-                          value={social.label}
-                          onChange={(e) => handleSocialMediaChange(index, 'label', e.target.value)}
-                          className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                        >
-                          <option value="">{t('platform')}</option>
-                          <option value="facebook">Facebook</option>
-                          <option value="instagram">Instagram</option>
-                          <option value="twitter">Twitter</option>
-                        </select>
-                        <input
-                          type="text"
-                          value={social.display_name || ''}
-                          onChange={(e) => handleSocialMediaChange(index, 'display_name', e.target.value)}
-                          placeholder={t('enterDisplayName')}
-                          className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                        />
-                      </div>
+              {/* Contact Information */}
+              <div className="mb-6">
+                <h3 className="text-md font-medium text-gray-700 mb-3">{t('contactInformation')}</h3>
+                <div className="space-y-3">
+                  {(footerSettings.contact.phone || ['']).map((phone, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
                       <input
-                        type="url"
-                        value={social.value || ''}
-                        onChange={(e) => handleSocialMediaChange(index, 'value', e.target.value)}
-                        placeholder={t('enterLink')}
-                        className="flex-2 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleSocialMediaRemove(index)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <FiTrash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={handleSocialMediaAdd}
-                    className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <FiPlus className="h-5 w-5 mr-1" />
-                    {t('addSocialMedia')}
-                  </button>
-                </div>
-
-                {/* Contact Information */}
-                <div className="mb-6">
-                  <h3 className="text-md font-medium text-gray-700 mb-3">{t('contactInformation')}</h3>
-                  <div className="space-y-3">
-                    {(footerSettings.contact.phone || ['']).map((phone, idx) => (
-                      <div key={idx} className="flex gap-2 items-center">
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={e => handlePhoneChange(idx, e.target.value)}
-                          placeholder={t('enterPhoneNumber')}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                        />
-                        {footerSettings.contact.phone.length > 1 && (
-                          <button type="button" onClick={() => handleRemovePhone(idx)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                            <FiTrash2 className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button type="button" onClick={handleAddPhone} className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      <FiPlus className="h-5 w-5 mr-1" /> {t('addPhone') || 'Add Phone'}
-                    </button>
-                    <input
-                      type="email"
-                      value={footerSettings.contact.email || ''}
-                      onChange={e => handleContactChange('email', e.target.value)}
-                      placeholder={t('enterEmailAddress')}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Location Information */}
-                <div className="mb-6">
-                  <h3 className="text-md font-medium text-gray-700 mb-3">{t('locationInformation')}</h3>
-                  {(footerSettings.location.address || ['']).map((address, idx) => (
-                    <div key={idx} className="flex gap-2 items-center mb-2">
-                      <textarea
-                        value={address}
-                        onChange={e => handleAddressChange(idx, e.target.value)}
-                        placeholder={t('enterAddress')}
-                        rows="2"
+                        type="tel"
+                        value={phone}
+                        onChange={e => handlePhoneChange(idx, e.target.value)}
+                        placeholder={t('enterPhoneNumber')}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
-                      {footerSettings.location.address.length > 1 && (
-                        <button type="button" onClick={() => handleRemoveAddress(idx)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      {footerSettings.contact.phone.length > 1 && (
+                        <button type="button" onClick={() => handleRemovePhone(idx)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                           <FiTrash2 className="h-5 w-5" />
                         </button>
                       )}
                     </div>
                   ))}
-                  <button type="button" onClick={handleAddAddress} className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    <FiPlus className="h-5 w-5 mr-1" /> {t('addAddress') || 'Add Address'}
+                  <button type="button" onClick={handleAddPhone} className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <FiPlus className="h-5 w-5 mr-1" /> {t('addPhone') || 'Add Phone'}
                   </button>
+                  <input
+                    type="email"
+                    value={footerSettings.contact.email || ''}
+                    onChange={e => handleContactChange('email', e.target.value)}
+                    placeholder={t('enterEmailAddress')}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
                 </div>
-                {/* Error/Success/Save for Footer */}
-                {openSection === 'footer' && error && (
-                  <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg mt-4">
-                    <p className="text-sm text-red-700">{error}</p>
+              </div>
+
+              {/* Location Information */}
+              <div className="mb-6">
+                <h3 className="text-md font-medium text-gray-700 mb-3">{t('locationInformation')}</h3>
+                {(footerSettings.location.address || ['']).map((address, idx) => (
+                  <div key={idx} className="flex gap-2 items-center mb-2">
+                    <textarea
+                      value={address}
+                      onChange={e => handleAddressChange(idx, e.target.value)}
+                      placeholder={t('enterAddress')}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    />
+                    {footerSettings.location.address.length > 1 && (
+                      <button type="button" onClick={() => handleRemoveAddress(idx)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <FiTrash2 className="h-5 w-5" />
+                      </button>
+                    )}
                   </div>
-                )}
-                {openSection === 'footer' && success && (
-                  <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg mt-4">
-                    <p className="text-sm text-green-600">{success}</p>
-                  </div>
-                )}
-                <button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className={`mt-2 px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
-                    isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  {isLoading ? t('saving') : t('saveSettings')}
+                ))}
+                <button type="button" onClick={handleAddAddress} className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <FiPlus className="h-5 w-5 mr-1" /> {t('addAddress') || 'Add Address'}
                 </button>
               </div>
-            )}
-          </div>
+              {/* Error/Success/Save for Footer */}
+              {openSection === 'footer' && error && (
+                <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg mt-4">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+              {openSection === 'footer' && success && (
+                <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg mt-4">
+                  <p className="text-sm text-green-600">{success}</p>
+                </div>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className={`mt-2 px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+                  isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isLoading ? t('saving') : t('saveSettings')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

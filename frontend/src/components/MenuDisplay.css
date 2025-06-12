@@ -1,0 +1,23 @@
+@keyframes fade-in-menu {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up-menu {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes pop-menu {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.menu-animate-fade-in {
+  animation: fade-in-menu 0.5s cubic-bezier(0.4,0,0.2,1) both;
+}
+.menu-animate-slide-up {
+  animation: slide-up-menu 0.6s cubic-bezier(0.4,0,0.2,1) both;
+}
+.menu-animate-pop {
+  animation: pop-menu 0.45s cubic-bezier(0.4,0,0.2,1) both;
+}

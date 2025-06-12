@@ -226,238 +226,247 @@ function AdminManagement({ mainContentRef }) {
   };
 
   return (
-    <div id="admins-section" className="mb-16 px-4 sm:px-0">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-        {t('adminAccounts')}
-        <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
-          {t('adminsCount', { count: admins.length })}
-        </span>
-      </h1>
+    <div className="relative max-w-3xl mx-auto py-8">
+      <button
+        className="fixed top-6 left-6 z-50 bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        onClick={() => window.history.back()}
+      >
+        ← Back
+      </button>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4" id="admin-form">
-            {editingAdmin ? t('editAdmin') : t('addNewAdmin')}
-          </h2>
-          <form onSubmit={handleSubmitAdmin}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-1">
-                  {t('username')}
-                </label>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUser className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={t('enterUsername')}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              {!editingAdmin && (
+      <div id="admins-section" className="mb-16 px-4 sm:px-0">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+          {t('adminAccounts')}
+          <span className="ml-3 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+            {t('adminsCount', { count: admins.length })}
+          </span>
+        </h1>
+
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100">
+          <div className="p-6">
+            <h2 className="text-lg font-medium text-gray-800 mb-4" id="admin-form">
+              {editingAdmin ? t('editAdmin') : t('addNewAdmin')}
+            </h2>
+            <form onSubmit={handleSubmitAdmin}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">
-                    {t('password')}
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-1">
+                    {t('username')}
                   </label>
                   <div className="relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FiUser className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t('enterPassword')}
+                      type="text"
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder={t('enterUsername')}
                       className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     />
                   </div>
                 </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{t('photo')}</label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handlePhotoChange}
-                    disabled={isUploadingPhoto}
-                    className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${isUploadingPhoto ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  />
-                  {isUploadingPhoto && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
-                      <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        < circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                {photoPreview && (
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="mt-2 h-20 w-20 object-cover rounded-full border"
-                  />
-                )}
-                {photo && (
-                  <img
-                    src={`${BASE_URL}${photo}`}
-                    alt="Admin"
-                    className="mt-2 h-20 w-20 object-cover rounded-full border"
-                    onError={handleImageError}
-                  />
-                )}
-                {photo && (
-                  <div className="text-xs text-gray-500 mt-1">{photo}</div>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={isLoadingAdmins}
-                className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 transition-colors text-sm font-medium"
-              >
-                {isLoadingAdmins ? (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                ) : editingAdmin ? (
-                  <FiCheck className="mr-1" />
-                ) : (
-                  <FiPlus className="mr-1" />
-                )}
-                {isLoadingAdmins ? t('loading') : editingAdmin ? t('update') : t('add')}
-              </button>
-              {editingAdmin && (
-                <button
-                  type="button"
-                  onClick={cancelEditingAdmin}
-                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors text-sm font-medium"
-                >
-                  <FiX className="inline mr-1" />
-                  {t('cancel')}
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {errorAdmins && (
-        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-600">{errorAdmins}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {successAdmins && (
-        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-600">{successAdmins}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isLoadingAdmins && admins.length === 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
-              <div className="flex items-center space-x-3">
-                <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : admins.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('noAdmins')}</h3>
-          <p className="mt-1 text-sm text-gray-500">{t('addFirstAdmin')}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {admins.map((admin) => (
-            <div key={admin.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                    {admin.photo ? (
-                      <img 
-                        src={`${BASE_URL}${admin.photo}`} 
-                        alt={admin.username}
-                        onError={handleImageError}
-                        className="h-12 w-12 object-cover"
+                {!editingAdmin && (
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">
+                      {t('password')}
+                    </label>
+                    <div className="relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FiUser className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={t('enterPassword')}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
-                    ) : (
-                      <FiUser className="h-5 w-5 text-gray-500" />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('photo')}</label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handlePhotoChange}
+                      disabled={isUploadingPhoto}
+                      className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${isUploadingPhoto ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    />
+                    {isUploadingPhoto && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
+                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          < circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
                     )}
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-800">{admin.username}</h3>
-                    <p className="text-xs text-gray-500">{t('adminAccount')}</p>
-                  </div>
-                </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      startEditingAdmin(admin);
-                      const formSection = document.getElementById('admin-form');
-                      if (formSection) {
-                        const headerOffset = 120;
-                        const elementPosition = formSection.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                        window.scrollTo({
-                          top: offsetPosition,
-                          behavior: 'smooth',
-                        });
-                      }
-                    }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title={t('edit')}
-                  >
-                    <FiEdit2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => deleteAdmin(admin.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title={t('delete')}
-                  >
-                    <FiTrash2 className="h-4 w-4" />
-                  </button>
+                  {photoPreview && (
+                    <img
+                      src={photoPreview}
+                      alt="Preview"
+                      className="mt-2 h-20 w-20 object-cover rounded-full border"
+                    />
+                  )}
+                  {photo && (
+                    <img
+                      src={`${BASE_URL}${photo}`}
+                      alt="Admin"
+                      className="mt-2 h-20 w-20 object-cover rounded-full border"
+                      onError={handleImageError}
+                    />
+                  )}
+                  {photo && (
+                    <div className="text-xs text-gray-500 mt-1">{photo}</div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isLoadingAdmins}
+                  className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 transition-colors text-sm font-medium"
+                >
+                  {isLoadingAdmins ? (
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : editingAdmin ? (
+                    <FiCheck className="mr-1" />
+                  ) : (
+                    <FiPlus className="mr-1" />
+                  )}
+                  {isLoadingAdmins ? t('loading') : editingAdmin ? t('update') : t('add')}
+                </button>
+                {editingAdmin && (
+                  <button
+                    type="button"
+                    onClick={cancelEditingAdmin}
+                    className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors text-sm font-medium"
+                  >
+                    <FiX className="inline mr-1" />
+                    {t('cancel')}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
         </div>
-      )}
+
+        {errorAdmins && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-600">{errorAdmins}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {successAdmins && (
+          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-600">{successAdmins}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isLoadingAdmins && admins.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse">
+                <div className="flex items-center space-x-3">
+                  <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : admins.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">{t('noAdmins')}</h3>
+            <p className="mt-1 text-sm text-gray-500">{t('addFirstAdmin')}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {admins.map((admin) => (
+              <div key={admin.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                      {admin.photo ? (
+                        <img 
+                          src={`${BASE_URL}${admin.photo}`} 
+                          alt={admin.username}
+                          onError={handleImageError}
+                          className="h-12 w-12 object-cover"
+                        />
+                      ) : (
+                        <FiUser className="h-5 w-5 text-gray-500" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-800">{admin.username}</h3>
+                      <p className="text-xs text-gray-500">{t('adminAccount')}</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        startEditingAdmin(admin);
+                        const formSection = document.getElementById('admin-form');
+                        if (formSection) {
+                          const headerOffset = 120;
+                          const elementPosition = formSection.getBoundingClientRect().top;
+                          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                          window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth',
+                          });
+                        }
+                      }}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                      title={t('edit')}
+                    >
+                      <FiEdit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteAdmin(admin.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title={t('delete')}
+                    >
+                      <FiTrash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

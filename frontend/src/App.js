@@ -11,6 +11,16 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import SelectionHub from './components/SelectionHub';
+import ItemManagement from './components/ItemManagement';
+import CategoryManagement from './components/CategoryManagement';
+import TableManagement from './components/TableManagement';
+import CallWaiterManagement from './components/CallWaiterManagement';
+import FeedbackManagement from './components/FeedbackManagement';
+import AdminManagement from './components/AdminManagement';
+import SettingsPanel from './components/SettingsPanel';
+import NotificationsManagement from './components/NotificationsManagement';
+import KitchenPage from './components/KitchenPage';
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '') + '/';
@@ -21,43 +31,33 @@ function MainApp() {
   const [userData, setUserData] = useState({ username: '', photo: null });
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  // Fetch logged-in admin data
+  // Only fetch user data if token exists (for admin/protected routes)
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/login');
+        setIsLoadingUser(false);
         return;
       }
-
       try {
-        // Validate and decode JWT token
         let decoded;
         try {
           decoded = jwtDecode(token);
         } catch (error) {
           console.error('Invalid token:', error);
           localStorage.removeItem('token');
-          navigate('/login');
+          setIsLoadingUser(false);
           return;
         }
         const userId = decoded.id || decoded.sub;
         const username = decoded.username || 'Admin';
-
-        // Fetch admins to get photo
         const response = await axios.get(`${API_URL}/admins`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('Admins response:', response.data); // Debug log
         const admins = response.data;
         const currentAdmin = admins.find(
           (admin) => admin.id === userId || admin.username === username
         );
-
-        if (!currentAdmin) {
-          throw new Error('Admin not found');
-        }
-
         setUserData({
           username: username,
           photo: currentAdmin?.photo ? `${BASE_URL}${currentAdmin.photo}` : null,
@@ -65,14 +65,12 @@ function MainApp() {
       } catch (error) {
         console.error('Error fetching user data:', error);
         localStorage.removeItem('token');
-        navigate('/login');
       } finally {
         setIsLoadingUser(false);
       }
     };
-
     fetchUserData();
-  }, [navigate]);
+  }, []);
 
   const handleImageError = (event) => {
     event.target.src = ''; // Match AdminManagement.js error handling
@@ -92,6 +90,54 @@ function MainApp() {
   return (
     <div className="p-4 min-h-screen bg-gray-50">
       <Routes>
+        {/* Selection Hub after login */}
+        <Route path="/admin" element={<ProtectedRoute><SelectionHub navigate={navigate} userData={userData} /></ProtectedRoute>} />
+
+        {/* Kitchen Section */}
+        <Route path="/kitchen/items" element={<ProtectedRoute><ItemManagement /></ProtectedRoute>} />
+        <Route path="/kitchen/categories" element={<ProtectedRoute><CategoryManagement /></ProtectedRoute>} />
+        <Route path="/kitchen/tables" element={<ProtectedRoute><TableManagement /></ProtectedRoute>} />
+        <Route path="/kitchen/call-waiter" element={<ProtectedRoute><CallWaiterManagement /></ProtectedRoute>} />
+        <Route path="/kitchen" element={<ProtectedRoute><KitchenPage navigate={navigate} /></ProtectedRoute>} />
+
+        {/* Analytics Section (dashboard, stock, expenses all together) */}
+        <Route path="/analytics" element={
+          <ProtectedRoute>
+            <div className="max-w-4xl mx-auto py-8">
+              <button
+                className="fixed top-6 left-6 z-50 bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                onClick={() => window.history.back()}
+              >
+                ← Back
+              </button>
+              <h2 className="text-3xl font-bold mb-6 text-blue-700">Analytics & Management</h2>
+              <div className="space-y-8">
+                <div className="bg-white rounded-xl shadow p-6">
+                  <AnalyticsDashboard />
+                </div>
+                <div className="bg-white rounded-xl shadow p-6">
+                  <StockPage />
+                </div>
+                <div className="bg-white rounded-xl shadow p-6">
+                  <ExpensePage />
+                </div>
+              </div>
+            </div>
+          </ProtectedRoute>
+        } />
+
+        {/* Staff Section */}
+        <Route path="/staff" element={<ProtectedRoute><AdminManagement /></ProtectedRoute>} />
+
+        {/* Feedback Section */}
+        <Route path="/feedback" element={<ProtectedRoute><FeedbackManagement /></ProtectedRoute>} />
+
+        {/* Notifications Management Section */}
+        <Route path="/notifications-management" element={<ProtectedRoute><NotificationsManagement /></ProtectedRoute>} />
+
+        {/* Settings Section */}
+        <Route path="/settings" element={<ProtectedRoute><SettingsPanel /></ProtectedRoute>} />
+
         {/* Public Menu Route */}
         <Route
           path="/"
@@ -117,58 +163,7 @@ function MainApp() {
         {/* Protected Management Route */}
         <Route
           path="/manage"
-          element={
-            <ProtectedRoute>
-              <div className="space-y-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h1 className="text-3xl font-bold text-gray-800">{t('manageCafeMenuTitle')}</h1>
-                  <div className="flex items-center space-x-4">
-                    {/* User Account Display */}
-                    <div className="flex items-center space-x-3">
-                      {isLoadingUser ? (
-                        <div className="h-12 w-12 rounded-full bg-gray-200 animate-pulse"></div>
-                      ) : (
-                        <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                          {userData.photo ? (
-                            <img
-                              src={userData.photo}
-                              alt={userData.username}
-                              className="h-12 w-12 object-cover"
-                              onError={handleImageError}
-                            />
-                          ) : (
-                            <FiUser className="h-5 w-5 text-gray-500" />
-                          )}
-                        </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-700">
-                        {isLoadingUser ? 'Loading...' : userData.username}
-                      </span>
-                    </div>
-                    {/* View Public Menu Button */}
-                    <Link
-                      to="/"
-                      className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-sm"
-                    >
-                      <FiEye className="h-5 w-5" />
-                      <span>{t('viewPublicMenu')}</span>
-                    </Link>
-                  </div>
-                </div>
-                <Admins />
-                {/* Admin Management Tabs */}
-                <div className="flex flex-col gap-6 mt-8">
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <StockPage />
-                  </div>
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <ExpensePage />
-                  </div>
-                  {/* Removed duplicate AnalyticsDashboard here to avoid double rendering */}
-                </div>
-              </div>
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/admin" replace />}
         />
 
         {/* Admin Stock Management Route */}

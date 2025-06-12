@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
-import AnalyticsDashboard from './AnalyticsDashboard';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -159,10 +158,13 @@ const StockPage = () => {
   };
 
   return (
-    <div>
-      {/* --- Analytics Dashboard --- */}
-      <AnalyticsDashboard />
-      {/* --- End Analytics Dashboard --- */}
+    <div className="relative max-w-3xl mx-auto py-8">
+      <button
+        className="fixed top-6 left-6 z-50 bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        onClick={() => window.history.back()}
+      >
+        ← Back
+      </button>
       <h2 className="text-xl font-bold mb-2">Stock Management</h2>
       <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2">
         <select name="item_id" value={form.item_id} onChange={handleChange} required className="border p-2 rounded" disabled={!!editingId}>

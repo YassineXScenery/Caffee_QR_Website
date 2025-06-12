@@ -1,0 +1,230 @@
+/* Base Styles (unchanged mobile styles) */
+.selection-hub {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe);
+  padding: 0;
+  animation: fade-in 0.7s ease both;
+}
+
+/* Mobile Header (unchanged) */
+.mobile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar,
+.avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+}
+
+.avatar-placeholder {
+  background-color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.welcome-text {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mobile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.menu-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.logout-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.mobile-btn:hover {
+  transform: translateY(-1px);
+}
+
+.mobile-btn:active {
+  transform: translateY(0);
+}
+
+/* Desktop Sidebar (new improved styles) */
+.desktop-sidebar {
+  display: none;
+}
+
+/* Main Content (unchanged mobile styles) */
+.hub-content {
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hub-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e40af;
+  margin-bottom: 2rem;
+  animation: fade-in 0.8s 0.3s ease both;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.hub-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  animation: pop 0.5s ease both;
+}
+
+.hub-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.wide-btn {
+  grid-column: span 2;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Desktop Styles (new improvements) */
+@media (min-width: 1024px) {
+  .mobile-header {
+    display: none;
+  }
+  
+  .desktop-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100vh;
+    padding: 2rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+  
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .sidebar-user-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .username {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #1f2937;
+  }
+  
+  .sidebar-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  .sidebar-btn:hover {
+    transform: translateX(5px);
+  }
+  
+  .hub-content {
+    margin-right: 280px;
+    padding: 3rem 2rem;
+  }
+  
+  .hub-grid {
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .hub-title {
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .btn-icon {
+    font-size: 2.25rem;
+  }
+}
+
+/* Button Animation Delays */
+.hub-btn:nth-child(1) { animation-delay: 0.1s; }
+.hub-btn:nth-child(2) { animation-delay: 0.2s; }
+.hub-btn:nth-child(3) { animation-delay: 0.3s; }
+.hub-btn:nth-child(4) { animation-delay: 0.4s; }
+.hub-btn:nth-child(5) { animation-delay: 0.5s; }
+.hub-btn:nth-child(6) { animation-delay: 0.6s; }

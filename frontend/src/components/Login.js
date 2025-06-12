@@ -31,9 +31,9 @@ function Login() {
         username,
         password,
       });
-      
       localStorage.setItem('token', response.data.token);
-      navigate('/manage');
+      // Immediately update userData in parent (MainApp) after login
+      window.location.href = '/admin'; // Use full reload to ensure userData is fetched fresh
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.error || t('loginError'));

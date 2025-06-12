@@ -189,7 +189,13 @@ const ExpensePage = () => {
   };
 
   return (
-    <div>
+    <div className="relative max-w-3xl mx-auto py-8">
+      <button
+        className="fixed top-6 left-6 z-50 bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        onClick={() => window.history.back()}
+      >
+        ← Back
+      </button>
       <h2 className="text-xl font-bold mb-2">Expense Management</h2>
       {/* Add/Edit Expense Form */}
       <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2">
