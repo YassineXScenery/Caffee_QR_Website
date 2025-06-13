@@ -13,11 +13,12 @@ function AdminManagement({ mainContentRef }) {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [role, setRole] = useState('Waiter');
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
   const [errorAdmins, setErrorAdmins] = useState(null);
   const [successAdmins, setSuccessAdmins] = useState(null);
-  const [photo, setPhoto] = useState(null); // Initialize as null
+  const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = useRef();
@@ -99,13 +100,12 @@ function AdminManagement({ mainContentRef }) {
     setErrorAdmins(null);
     try {
       const token = localStorage.getItem('token');
-      const payload = { username, email, phone_number: phoneNumber };
+      const payload = { username, email, phone_number: phoneNumber, role };
 
       if (!editingAdmin) {
         payload.password = password;
       }
 
-      // Always include photo in payload (null if no photo)
       payload.photo = photo;
 
       if (editingAdmin) {
@@ -120,11 +120,11 @@ function AdminManagement({ mainContentRef }) {
         setSuccessAdmins(t('adminAdded'));
       }
 
-      // Reset form and states
       setUsername('');
       setPassword('');
       setEmail('');
       setPhoneNumber('');
+      setRole('Waiter');
       setPhoto(null);
       setPhotoPreview(null);
       setEditingAdmin(null);
@@ -178,6 +178,7 @@ function AdminManagement({ mainContentRef }) {
     setPassword('');
     setEmail(admin.email || '');
     setPhoneNumber(admin.phone_number || '');
+    setRole(admin.role || 'Waiter');
     setPhoto(admin.photo || null);
     setPhotoPreview(admin.photo ? `${BASE_URL}${admin.photo}` : null);
     console.log('Starting to edit admin:', admin);
@@ -215,6 +216,7 @@ function AdminManagement({ mainContentRef }) {
     setPassword('');
     setEmail('');
     setPhoneNumber('');
+    setRole('Waiter');
     setPhoto(null);
     setPhotoPreview(null);
     setErrorAdmins(null);
@@ -228,7 +230,7 @@ function AdminManagement({ mainContentRef }) {
   }, [loadAdmins]);
 
   const handleImageError = (event) => {
-    event.target.src = ''; // Remove fallback logic
+    event.target.src = '';
   };
 
   return (
@@ -320,6 +322,21 @@ function AdminManagement({ mainContentRef }) {
                   />
                 </div>
                 <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-600 mb-1">
+                    {t('role')}
+                  </label>
+                  <select
+                    id="role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="block w-full pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  >
+                    <option value="Owner">{t('owner')}</option>
+                    <option value="Manager">{t('manager')}</option>
+                    <option value="Waiter">{t('waiter')}</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">{t('photo')}</label>
                   <div className="relative">
                     <input
@@ -333,7 +350,7 @@ function AdminManagement({ mainContentRef }) {
                     {isUploadingPhoto && (
                       <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
                         <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          < circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                       </div>
@@ -461,7 +478,7 @@ function AdminManagement({ mainContentRef }) {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-800">{admin.username}</h3>
-                      <p className="text-xs text-gray-500">{t('adminAccount')}</p>
+                      <p className="text-xs text-gray-500">{t('role')}: {admin.role}</p>
                       {admin.email && <p className="text-xs text-gray-500">{admin.email}</p>}
                       {admin.phone_number && <p className="text-xs text-gray-500">{admin.phone_number}</p>}
                     </div>

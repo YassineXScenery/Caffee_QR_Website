@@ -1,4 +1,4 @@
-/* Base Styles (unchanged mobile styles) */
+/* Base Styles */
 .selection-hub {
   min-height: 100vh;
   background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe);
@@ -6,7 +6,7 @@
   animation: fade-in 0.7s ease both;
 }
 
-/* Mobile Header (unchanged) */
+/* Mobile Header */
 .mobile-header {
   display: flex;
   justify-content: space-between;
@@ -58,7 +58,7 @@
   border-radius: 0.5rem;
   font-weight: 600;
   font-size: 0.875rem;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .menu-btn {
@@ -72,19 +72,16 @@
 }
 
 .mobile-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.mobile-btn:active {
-  transform: translateY(0);
-}
-
-/* Desktop Sidebar (new improved styles) */
+/* Desktop Sidebar */
 .desktop-sidebar {
   display: none;
 }
 
-/* Main Content (unchanged mobile styles) */
+/* Main Content */
 .hub-content {
   padding: 2rem 1rem;
   max-width: 1200px;
@@ -103,10 +100,17 @@
 .hub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.hub-btn {
+/* Enhanced 3D Button Effects */
+.premium-btn-container {
+  perspective: 1000px;
+  position: relative;
+}
+
+.premium-btn {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,23 +120,84 @@
   color: white;
   border-radius: 0.75rem;
   font-weight: 600;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-  animation: pop 0.5s ease both;
+  border: none;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 6px 20px rgba(37, 99, 235, 0.3);
+  z-index: 1;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
 }
 
-.hub-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.btn-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
+}
+
+.btn-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateZ(20px);
+}
+
+.premium-btn:hover {
+  transform: 
+    translateY(-6px)
+    rotateX(10deg);
+  box-shadow: 
+    0 10px 20px rgba(0, 0, 0, 0.15),
+    0 15px 30px rgba(37, 99, 235, 0.4);
+}
+
+.premium-btn:hover .btn-background {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.premium-btn:hover .btn-content {
+  transform: 
+    translateZ(30px)
+    scale(1.1);
+}
+
+.premium-btn:hover .btn-icon {
+  transform: scale(1.2);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.premium-btn:active {
+  transform: 
+    translateY(-2px)
+    scale(0.98);
+}
+
+.wide-btn .premium-btn {
+  grid-column: span 2;
 }
 
 .btn-icon {
   font-size: 1.75rem;
   margin-bottom: 0.75rem;
-}
-
-.wide-btn {
-  grid-column: span 2;
+  transition: 
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    filter 0.4s ease;
+  transform-origin: center;
+  transform-style: preserve-3d;
 }
 
 /* Animations */
@@ -141,12 +206,15 @@
   to { opacity: 1; }
 }
 
-@keyframes pop {
-  0% { transform: scale(0.9); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
+/* Button Animation Delays */
+.premium-btn-container:nth-child(1) { animation: fade-in 0.5s 0.1s both; }
+.premium-btn-container:nth-child(2) { animation: fade-in 0.5s 0.2s both; }
+.premium-btn-container:nth-child(3) { animation: fade-in 0.5s 0.3s both; }
+.premium-btn-container:nth-child(4) { animation: fade-in 0.5s 0.4s both; }
+.premium-btn-container:nth-child(5) { animation: fade-in 0.5s 0.5s both; }
+.premium-btn-container:nth-child(6) { animation: fade-in 0.5s 0.6s both; }
 
-/* Desktop Styles (new improvements) */
+/* Desktop Styles */
 @media (min-width: 1024px) {
   .mobile-header {
     display: none;
@@ -216,15 +284,17 @@
     margin-bottom: 3rem;
   }
   
+  .premium-btn {
+    padding: 2rem 1.5rem;
+  }
+  
+  .premium-btn:hover {
+    transform: 
+      translateY(-8px)
+      rotateX(12deg);
+  }
+  
   .btn-icon {
     font-size: 2.25rem;
   }
 }
-
-/* Button Animation Delays */
-.hub-btn:nth-child(1) { animation-delay: 0.1s; }
-.hub-btn:nth-child(2) { animation-delay: 0.2s; }
-.hub-btn:nth-child(3) { animation-delay: 0.3s; }
-.hub-btn:nth-child(4) { animation-delay: 0.4s; }
-.hub-btn:nth-child(5) { animation-delay: 0.5s; }
-.hub-btn:nth-child(6) { animation-delay: 0.6s; }

@@ -6,12 +6,13 @@ const path = require('path');
 const fs = require('fs');
 const { UPLOADS_DIR } = require('../config/paths');
 
-// Admin management routes (protected by verifyToken)
+// Admin management routes
 router.get('/', adminController.verifyToken, adminController.getAllAdmins);
-router.post('/', adminController.verifyToken, adminController.addAdmin);
-router.put('/:id', adminController.verifyToken, adminController.modifyAdmin);
-router.delete('/:id', adminController.verifyToken, adminController.removeAdmin);
+router.post('/', adminController.verifyToken, adminController.isOwner, adminController.addAdmin);
+router.put('/:id', adminController.verifyToken, adminController.isOwner, adminController.modifyAdmin);
+router.delete('/:id', adminController.verifyToken, adminController.isOwner, adminController.removeAdmin);
 router.post('/login', adminController.loginAdmin);
+router.get('/me', adminController.verifyToken, adminController.getCurrentAdmin);
 
 // Route for uploading admin photo
 router.post('/upload-photo', adminController.verifyToken, upload.single('photo'), (req, res) => {
@@ -55,7 +56,5 @@ router.post('/upload-photo', adminController.verifyToken, upload.single('photo')
     res.status(500).json({ error: 'File upload processing failed' });
   }
 });
-
-// All admin management routes are already protected by adminController.verifyToken except login and upload-photo.
 
 module.exports = router;

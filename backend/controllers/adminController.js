@@ -12,8 +12,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 exports.verifyToken = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
 
-  console.log('Verifying token for request:', req.method, req.url);
-  console.log('Token received:', token);
+  console.log('Verifying token for request:', {
+    method: req.method,
+    url: req.url,
+    token: token ? `${token.slice(0, 10)}...` : 'None',
+  });
 
   if (!token) {
     console.log('No token provided');
@@ -22,13 +25,31 @@ exports.verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Token decoded:', decoded);
+    console.log('Token decoded:', {
+      id: decoded.id,
+      username: decoded.username,
+      role: decoded.role,
+      iat: decoded.iat,
+      exp: decoded.exp,
+    });
     req.user = decoded;
     next();
   } catch (err) {
-    console.error('Token verification failed:', err);
+    console.error('Token verification failed:', {
+      error: err.message,
+      stack: err.stack,
+    });
     return res.status(401).json({ error: 'Invalid token.' });
   }
+};
+
+// Middleware to restrict to Owners only
+exports.isOwner = (req, res, next) => {
+  if (req.user.role !== 'Owner') {
+    console.log('Access denied: User is not an Owner', { user: req.user });
+    return res.status(403).json({ error: 'Access denied. Only Owners can perform this action.' });
+  }
+  next();
 };
 
 // Admin login
@@ -57,7 +78,7 @@ exports.loginAdmin = async (req, res) => {
       }
 
       const admin = results[0];
-      console.log('Admin found:', { id: admin.id, username: admin.username, password: admin.password });
+      console.log('Admin found:', { id: admin.id, username: admin.username, role: admin.role });
 
       const passwordMatch = await bcrypt.compare(password, admin.password);
       console.log('Password match result:', passwordMatch);
@@ -67,9 +88,9 @@ exports.loginAdmin = async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      // Generate JWT token
+      // Generate JWT token with role
       const token = jwt.sign(
-        { id: admin.id, username: admin.username },
+        { id: admin.id, username: admin.username, role: admin.role },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -82,7 +103,8 @@ exports.loginAdmin = async (req, res) => {
         admin: {
           id: admin.id,
           username: admin.username,
-          photo: admin.photo ? `uploads/${path.basename(admin.photo)}` : null
+          photo: admin.photo ? `uploads/${path.basename(admin.photo)}` : null,
+          role: admin.role
         }
       });
     });
@@ -92,10 +114,43 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
+// Get current admin details
+exports.getCurrentAdmin = (req, res) => {
+  const adminId = req.user.id;
+  db.query("SELECT id, username, photo, email, phone_number, role FROM admins WHERE id = ?", [adminId], (err, results) => {
+    if (err) {
+      console.error('Error fetching current admin:', err);
+      return res.status(500).json({ error: 'Failed to fetch admin' });
+    }
+    if (results.length === 0) {
+      console.log('No admin found for ID:', adminId);
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+    const admin = results[0];
+    let photoPath = null;
+    if (admin.photo) {
+      photoPath = `uploads/${path.basename(admin.photo)}`;
+      const fullPath = path.join(UPLOADS_DIR, path.basename(photoPath));
+      if (!fs.existsSync(fullPath)) {
+        console.warn(`Photo file not found for admin ${admin.username}:`, fullPath);
+        photoPath = null;
+      }
+    }
+    res.json({
+      id: admin.id,
+      username: admin.username,
+      photo: photoPath,
+      email: admin.email,
+      phone_number: admin.phone_number,
+      role: admin.role
+    });
+  });
+};
+
 // Get all admins
 exports.getAllAdmins = async (req, res) => {
   try {
-    db.query("SELECT id, username, photo, email, phone_number FROM admins", (err, results) => {
+    db.query("SELECT id, username, photo, email, phone_number, role FROM admins", (err, results) => {
       if (err) {
         console.error('Error fetching admins:', err);
         return res.status(500).json({ error: 'Failed to fetch admins' });
@@ -127,7 +182,7 @@ exports.getAllAdmins = async (req, res) => {
 
 // Add a new admin
 exports.addAdmin = async (req, res) => {
-  const { username, password, photo, email, phone_number } = req.body;
+  const { username, password, photo, email, phone_number, role } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
@@ -146,8 +201,8 @@ exports.addAdmin = async (req, res) => {
       photoPath = normalizedPhoto;
     }
     db.query(
-      "INSERT INTO admins (username, password, photo, email, phone_number) VALUES (?, ?, ?, ?, ?)",
-      [username, hashedPassword, photoPath, email || null, phone_number || null],
+      "INSERT INTO admins (username, password, photo, email, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)",
+      [username, hashedPassword, photoPath, email || null, phone_number || null, role || 'Waiter'],
       (err, result) => {
         if (err) {
           console.error('Error adding admin:', err);
@@ -165,7 +220,7 @@ exports.addAdmin = async (req, res) => {
 // Modify an admin
 exports.modifyAdmin = async (req, res) => {
   const { id } = req.params;
-  const { username, password, photo, email, phone_number } = req.body;
+  const { username, password, photo, email, phone_number, role } = req.body;
 
   console.log('Update request received:', { id, username, photo });
 
@@ -185,6 +240,7 @@ exports.modifyAdmin = async (req, res) => {
       if (password) updates.password = await bcrypt.hash(password, 10);
       if (typeof email !== 'undefined') updates.email = email;
       if (typeof phone_number !== 'undefined') updates.phone_number = phone_number;
+      if (role) updates.role = role;
       // Handle photo updates
       if (typeof photo !== 'undefined') {
         if (photo === null) {
