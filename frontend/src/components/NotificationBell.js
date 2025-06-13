@@ -8,7 +8,6 @@ function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotifications } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const audioRef = useRef(new Audio('/notification-sound.mp3'));
 
   // Close dropdown when clicking outside
   useEffect(() => {

@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { FiEye, FiHome, FiUser } from 'react-icons/fi';
+import { FiHome } from 'react-icons/fi';
 import Login from './components/Login';
 import MenuDisplay from './components/MenuDisplay';
-import Admins from './components/Admins';
 import StockPage from './components/StockPage';
 import ExpensePage from './components/ExpensePage';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
@@ -21,6 +20,8 @@ import AdminManagement from './components/AdminManagement';
 import SettingsPanel from './components/SettingsPanel';
 import NotificationsManagement from './components/NotificationsManagement';
 import KitchenPage from './components/KitchenPage';
+import ReportGenerator from './components/ReportGenerator';
+
 
 const API_URL = 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '') + '/';
@@ -31,7 +32,6 @@ function MainApp() {
   const [userData, setUserData] = useState({ username: '', photo: null });
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  // Only fetch user data if token exists (for admin/protected routes)
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token');
@@ -72,10 +72,6 @@ function MainApp() {
     fetchUserData();
   }, []);
 
-  const handleImageError = (event) => {
-    event.target.src = ''; // Match AdminManagement.js error handling
-  };
-
   const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -90,17 +86,13 @@ function MainApp() {
   return (
     <div className="p-4 min-h-screen bg-gray-50">
       <Routes>
-        {/* Selection Hub after login */}
         <Route path="/admin" element={<ProtectedRoute><SelectionHub navigate={navigate} userData={userData} /></ProtectedRoute>} />
-
-        {/* Kitchen Section */}
         <Route path="/kitchen/items" element={<ProtectedRoute><ItemManagement /></ProtectedRoute>} />
         <Route path="/kitchen/categories" element={<ProtectedRoute><CategoryManagement /></ProtectedRoute>} />
         <Route path="/kitchen/tables" element={<ProtectedRoute><TableManagement /></ProtectedRoute>} />
         <Route path="/kitchen/call-waiter" element={<ProtectedRoute><CallWaiterManagement /></ProtectedRoute>} />
         <Route path="/kitchen" element={<ProtectedRoute><KitchenPage navigate={navigate} /></ProtectedRoute>} />
 
-        {/* Analytics Section (dashboard, stock, expenses all together) */}
         <Route path="/analytics" element={
           <ProtectedRoute>
             <div className="max-w-4xl mx-auto py-8">
@@ -121,24 +113,20 @@ function MainApp() {
                 <div className="bg-white rounded-xl shadow p-6">
                   <ExpensePage />
                 </div>
+                <div className="bg-white rounded-xl shadow p-6">
+                  <h3 className="text-xl font-semibold mb-4 text-gray-700">Generate & Send Report</h3>
+                  <ReportGenerator />
+                </div>
               </div>
             </div>
           </ProtectedRoute>
         } />
 
-        {/* Staff Section */}
         <Route path="/staff" element={<ProtectedRoute><AdminManagement /></ProtectedRoute>} />
-
-        {/* Feedback Section */}
         <Route path="/feedback" element={<ProtectedRoute><FeedbackManagement /></ProtectedRoute>} />
-
-        {/* Notifications Management Section */}
         <Route path="/notifications-management" element={<ProtectedRoute><NotificationsManagement /></ProtectedRoute>} />
-
-        {/* Settings Section */}
         <Route path="/settings" element={<ProtectedRoute><SettingsPanel /></ProtectedRoute>} />
 
-        {/* Public Menu Route */}
         <Route
           path="/"
           element={
@@ -157,23 +145,12 @@ function MainApp() {
           }
         />
 
-        {/* Login Route */}
         <Route path="/login" element={<Login />} />
-
-        {/* Protected Management Route */}
-        <Route
-          path="/manage"
-          element={<Navigate to="/admin" replace />}
-        />
-
-        {/* Admin Stock Management Route */}
+        <Route path="/manage" element={<Navigate to="/admin" replace />} />
         <Route path="/admin/stock" element={<ProtectedRoute><StockPage /></ProtectedRoute>} />
-        {/* Admin Expense Management Route */}
         <Route path="/admin/expenses" element={<ProtectedRoute><ExpensePage /></ProtectedRoute>} />
-        {/* Admin Analytics Dashboard Route */}
         <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
-
-        {/* Redirect any unknown routes to the public menu */}
+        <Route path="/send-report" element={<ReportGenerator />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>

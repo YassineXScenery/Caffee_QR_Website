@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { FiSettings, FiGlobe, FiPlus, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import ReportReceivers from './ReportReceivers';
+import { useLocation } from 'react-router-dom';
 
 const API_URL = 'http://localhost:3000/api';
 
 function SettingsPanel() {
   const { t, i18n } = useTranslation();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const location = useLocation();
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'en');
   const [footerSettings, setFooterSettings] = useState({
     social: [],
@@ -17,13 +19,13 @@ function SettingsPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [openSection, setOpenSection] = useState(null); // 'language' or 'footer'
+  const [openSection, setOpenSection] = useState(null); // 'language', 'footer', or 'report-receivers'
 
   useEffect(() => {
     const fetchFooterSettings = async () => {
       try {
         const response = await axios.get(`${API_URL}/footer`);
-        setFooterSettings(data => ({
+        setFooterSettings({
           ...response.data,
           contact: {
             ...response.data.contact,
@@ -42,7 +44,7 @@ function SettingsPanel() {
                 ? [response.data.location.address]
                 : ['']
           }
-        }));
+        });
       } catch (err) {
         console.error('Error fetching footer settings:', err);
         setError(t('failedToLoadSettings'));
@@ -51,6 +53,12 @@ function SettingsPanel() {
 
     fetchFooterSettings();
   }, [t]);
+
+  useEffect(() => {
+    if (location.state && location.state.openSection === 'report-receivers') {
+      setOpenSection('report-receivers');
+    }
+  }, [location.state]);
 
   const handleLanguageChange = async (event) => {
     const newLang = event.target.value;
@@ -169,19 +177,15 @@ function SettingsPanel() {
     }
   };
 
-  const toggleSettings = () => {
-    setIsSettingsOpen(!isSettingsOpen);
-  };
-
   return (
     <div className="relative max-w-3xl mx-auto py-8">
       <button
         className="fixed top-6 left-6 z-50 bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
         onClick={() => window.history.back()}
       >
-        ← Back
+        ← {t('back')}
       </button>
-      <h2 className="text-3xl font-bold mb-6 text-blue-700">Settings</h2>
+      <h2 className="text-3xl font-bold mb-6 text-blue-700">{t('settings')}</h2>
       <div className="space-y-8">
         {/* Language Settings Collapsible */}
         <div className="bg-white rounded-xl shadow p-6">
@@ -189,7 +193,7 @@ function SettingsPanel() {
             className="w-full flex justify-between items-center text-lg font-semibold text-blue-700 focus:outline-none"
             onClick={() => setOpenSection(openSection === 'language' ? null : 'language')}
           >
-            Language Settings
+            {t('languageSettings')}
             <span>{openSection === 'language' ? <FiChevronUp /> : <FiChevronDown />}</span>
           </button>
           {openSection === 'language' && (
@@ -207,7 +211,6 @@ function SettingsPanel() {
                 <option value="fr">{t('french')}</option>
                 <option value="ar">{t('arabic')}</option>
               </select>
-              {/* Error/Success/Save for Language */}
               {openSection === 'language' && error && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg mt-4">
                   <p className="text-sm text-red-700">{error}</p>
@@ -236,7 +239,7 @@ function SettingsPanel() {
             className="w-full flex justify-between items-center text-lg font-semibold text-blue-700 focus:outline-none"
             onClick={() => setOpenSection(openSection === 'footer' ? null : 'footer')}
           >
-            Footer Settings
+            {t('footerSettings')}
             <span>{openSection === 'footer' ? <FiChevronUp /> : <FiChevronDown />}</span>
           </button>
           {openSection === 'footer' && (
@@ -312,7 +315,7 @@ function SettingsPanel() {
                     </div>
                   ))}
                   <button type="button" onClick={handleAddPhone} className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    <FiPlus className="h-5 w-5 mr-1" /> {t('addPhone') || 'Add Phone'}
+                    <FiPlus className="h-5 w-5 mr-1" /> {t('addPhone')}
                   </button>
                   <input
                     type="email"
@@ -344,10 +347,9 @@ function SettingsPanel() {
                   </div>
                 ))}
                 <button type="button" onClick={handleAddAddress} className="flex items-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                  <FiPlus className="h-5 w-5 mr-1" /> {t('addAddress') || 'Add Address'}
+                  <FiPlus className="h-5 w-5 mr-1" /> {t('addAddress')}
                 </button>
               </div>
-              {/* Error/Success/Save for Footer */}
               {openSection === 'footer' && error && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg mt-4">
                   <p className="text-sm text-red-700">{error}</p>
@@ -367,6 +369,21 @@ function SettingsPanel() {
               >
                 {isLoading ? t('saving') : t('saveSettings')}
               </button>
+            </div>
+          )}
+        </div>
+        {/* Report Receivers Collapsible */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <button
+            className="w-full flex justify-between items-center text-lg font-semibold text-blue-700 focus:outline-none"
+            onClick={() => setOpenSection(openSection === 'report-receivers' ? null : 'report-receivers')}
+          >
+            {t('reportReceiversSettings')}
+            <span>{openSection === 'report-receivers' ? <FiChevronUp /> : <FiChevronDown />}</span>
+          </button>
+          {openSection === 'report-receivers' && (
+            <div className="mt-4">
+              <ReportReceivers />
             </div>
           )}
         </div>

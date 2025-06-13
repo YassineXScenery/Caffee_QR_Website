@@ -16,6 +16,14 @@ const footerRoutes = require('./routes/footer'); // Import footer routes
 const stockRoutes = require('./routes/stock');
 const expensesRoutes = require('./routes/expenses');
 const analyticsRoutes = require('./routes/analytics');
+const sendReportRoute = require('./routes/sendReport');
+const reportReceiverRoutes = require('./routes/reportReceiverRoutes');
+console.log('sendReport route imported');
+require('dotenv').config();
+require('./controllers/autoSendReports');
+
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -93,6 +101,8 @@ app.use('/api/footer', footerRoutes); // Mount footer routes
 app.use('/api/stock', stockRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/send-report', sendReportRoute);
+app.use('/api', reportReceiverRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

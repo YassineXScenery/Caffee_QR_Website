@@ -11,6 +11,8 @@ function AdminManagement({ mainContentRef }) {
   const [admins, setAdmins] = useState([]);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
   const [errorAdmins, setErrorAdmins] = useState(null);
@@ -93,13 +95,11 @@ function AdminManagement({ mainContentRef }) {
       setErrorAdmins(t('passwordMinLength'));
       return;
     }
-
     setIsLoadingAdmins(true);
     setErrorAdmins(null);
-
     try {
       const token = localStorage.getItem('token');
-      const payload = { username };
+      const payload = { username, email, phone_number: phoneNumber };
 
       if (!editingAdmin) {
         payload.password = password;
@@ -123,6 +123,8 @@ function AdminManagement({ mainContentRef }) {
       // Reset form and states
       setUsername('');
       setPassword('');
+      setEmail('');
+      setPhoneNumber('');
       setPhoto(null);
       setPhotoPreview(null);
       setEditingAdmin(null);
@@ -174,6 +176,8 @@ function AdminManagement({ mainContentRef }) {
     setEditingAdmin(admin);
     setUsername(admin.username);
     setPassword('');
+    setEmail(admin.email || '');
+    setPhoneNumber(admin.phone_number || '');
     setPhoto(admin.photo || null);
     setPhotoPreview(admin.photo ? `${BASE_URL}${admin.photo}` : null);
     console.log('Starting to edit admin:', admin);
@@ -209,6 +213,8 @@ function AdminManagement({ mainContentRef }) {
     setEditingAdmin(null);
     setUsername('');
     setPassword('');
+    setEmail('');
+    setPhoneNumber('');
     setPhoto(null);
     setPhotoPreview(null);
     setErrorAdmins(null);
@@ -287,6 +293,32 @@ function AdminManagement({ mainContentRef }) {
                     </div>
                   </div>
                 )}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">
+                    {t('email')}
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder={t('enterEmail')}
+                    className="block w-full pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-600 mb-1">
+                    {t('phoneNumber')}
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={phoneNumber}
+                    onChange={e => setPhoneNumber(e.target.value)}
+                    placeholder={t('enterPhoneNumber')}
+                    className="block w-full pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">{t('photo')}</label>
                   <div className="relative">
@@ -430,6 +462,8 @@ function AdminManagement({ mainContentRef }) {
                     <div>
                       <h3 className="font-medium text-gray-800">{admin.username}</h3>
                       <p className="text-xs text-gray-500">{t('adminAccount')}</p>
+                      {admin.email && <p className="text-xs text-gray-500">{admin.email}</p>}
+                      {admin.phone_number && <p className="text-xs text-gray-500">{admin.phone_number}</p>}
                     </div>
                   </div>
                   <div className="flex space-x-1">

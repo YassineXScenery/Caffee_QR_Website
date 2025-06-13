@@ -69,7 +69,7 @@ const AnalyticsDashboard = () => {
   function formatMonthLabel(label) {
     if (!label) return label;
     // Accepts '2025/06' or '2025-06' or '2025/6' or '2025-6'
-    const match = label.match(/(\d{4})[\/-](\d{1,2})/);
+    const match = label.match(/(\d{4})[/-](\d{1,2})/);
     if (!match) return label;
     const year = match[1];
     const month = parseInt(match[2], 10);

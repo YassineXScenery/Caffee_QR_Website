@@ -95,7 +95,7 @@ exports.loginAdmin = async (req, res) => {
 // Get all admins
 exports.getAllAdmins = async (req, res) => {
   try {
-    db.query("SELECT id, username, photo FROM admins", (err, results) => {
+    db.query("SELECT id, username, photo, email, phone_number FROM admins", (err, results) => {
       if (err) {
         console.error('Error fetching admins:', err);
         return res.status(500).json({ error: 'Failed to fetch admins' });
@@ -112,14 +112,11 @@ exports.getAllAdmins = async (req, res) => {
             photoPath = null;
           }
         }
-        console.log(`Processing admin ${admin.username} with photo path:`, photoPath);
         return {
           ...admin,
           photo: photoPath
         };
       });
-      
-      console.log('Returning admins with photos:', adminsWithPhotos);
       res.json(adminsWithPhotos);
     });
   } catch (err) {
@@ -130,7 +127,7 @@ exports.getAllAdmins = async (req, res) => {
 
 // Add a new admin
 exports.addAdmin = async (req, res) => {
-  const { username, password, photo } = req.body;
+  const { username, password, photo, email, phone_number } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
@@ -138,7 +135,6 @@ exports.addAdmin = async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    
     // Validate photo path if provided
     let photoPath = null;
     if (photo) {
@@ -149,10 +145,9 @@ exports.addAdmin = async (req, res) => {
       }
       photoPath = normalizedPhoto;
     }
-
     db.query(
-      "INSERT INTO admins (username, password, photo) VALUES (?, ?, ?)",
-      [username, hashedPassword, photoPath],
+      "INSERT INTO admins (username, password, photo, email, phone_number) VALUES (?, ?, ?, ?, ?)",
+      [username, hashedPassword, photoPath, email || null, phone_number || null],
       (err, result) => {
         if (err) {
           console.error('Error adding admin:', err);
@@ -170,7 +165,7 @@ exports.addAdmin = async (req, res) => {
 // Modify an admin
 exports.modifyAdmin = async (req, res) => {
   const { id } = req.params;
-  const { username, password, photo } = req.body;
+  const { username, password, photo, email, phone_number } = req.body;
 
   console.log('Update request received:', { id, username, photo });
 
@@ -188,7 +183,8 @@ exports.modifyAdmin = async (req, res) => {
       const updates = {};
       if (username) updates.username = username;
       if (password) updates.password = await bcrypt.hash(password, 10);
-
+      if (typeof email !== 'undefined') updates.email = email;
+      if (typeof phone_number !== 'undefined') updates.phone_number = phone_number;
       // Handle photo updates
       if (typeof photo !== 'undefined') {
         if (photo === null) {

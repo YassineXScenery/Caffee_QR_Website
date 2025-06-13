@@ -30,7 +30,7 @@ function CallWaiterManagement() {
     };
 
     fetchTables();
-  }, []); // Empty dependency array to run only once on mount
+  }, [t]); // Add t to dependencies
 
   // Fetch requests and set up socket listener
   useEffect(() => {
@@ -63,7 +63,7 @@ function CallWaiterManagement() {
     return () => {
       socket.off('waiterCalled', handleCallWaiter);
     };
-  }, [tables]); // Depend on tables, but tables is now stable
+  }, [tables, t]); // Add t to dependencies
 
   // Fetch callWaiterEnabled setting
   useEffect(() => {
