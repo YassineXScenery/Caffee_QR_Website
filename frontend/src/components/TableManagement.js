@@ -4,6 +4,7 @@ import { FiTrash2 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:3000/api';
+const BASE_URL = 'http://localhost:3000';
 
 function TableManagement() {
   const { t } = useTranslation();
@@ -12,6 +13,7 @@ function TableManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [selectedQR, setSelectedQR] = useState(null);
 
   const loadTables = async () => {
     setIsLoading(true);
@@ -28,16 +30,22 @@ function TableManagement() {
   const createTables = async (e) => {
     e.preventDefault();
     const number = parseInt(numTables);
-    
     if (!number || number < 1 || number > 100) {
       setError(t('enterValidTableNumber'));
       return;
     }
-
     setIsLoading(true);
     setError(null);
     try {
-      await axios.post(`${API_URL}/tables`, { numberOfTables: number });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      await axios.post(
+        `${API_URL}/tables`,
+        { numberOfTables: number },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setSuccess(t('tablesCreatedSuccess', { count: number }));
       setNumTables('');
       await loadTables();
@@ -49,10 +57,39 @@ function TableManagement() {
     }
   };
 
+  const generateQRCodesForExisting = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.post(
+        `${API_URL}/tables/generate-qr-codes`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSuccess(response.data.message);
+      await loadTables();
+    } catch (err) {
+      setError(err.response?.data?.error || t('failedToGenerateQRCodes'));
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  };
+
   const deleteTable = async (tableNumber) => {
     try {
-      await axios.delete(`${API_URL}/tables/${tableNumber}`);
-      setTables(prev => prev.filter(t => t.table_number !== tableNumber));
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      await axios.delete(`${API_URL}/tables/${tableNumber}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTables((prev) => prev.filter((t) => t.table_number !== tableNumber));
     } catch (err) {
       setError(err.response?.data?.error || t('failedToDeleteTable'));
     }
@@ -61,7 +98,13 @@ function TableManagement() {
   const deleteAllTables = async () => {
     if (!window.confirm(t('confirmDeleteAllTables'))) return;
     try {
-      await axios.delete(`${API_URL}/tables`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      await axios.delete(`${API_URL}/tables`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTables([]);
       setSuccess(t('allTablesDeleted'));
     } catch (err) {
@@ -69,8 +112,33 @@ function TableManagement() {
     }
   };
 
+  const showQRCode = (qrPath) => {
+    setSelectedQR(qrPath);
+  };
+
+  const closeQRModal = () => {
+    setSelectedQR(null);
+  };
+
+  const downloadQRCode = () => {
+    if (!selectedQR) {
+      setError(t('noQRCodeSelected'));
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = selectedQR;
+    link.download = `qr_code_${selectedQR.split('/').pop()}`;
+    link.onerror = () => setError(t('failedToDownloadQRCode'));
+    link.click();
+  };
+
   useEffect(() => {
-    loadTables();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login'; // Adjust to your login route
+    } else {
+      loadTables();
+    }
   }, []);
 
   return (
@@ -104,6 +172,13 @@ function TableManagement() {
               {isLoading ? t('creating') : t('createTables')}
             </button>
           </form>
+          <button
+            onClick={generateQRCodesForExisting}
+            disabled={isLoading}
+            className="mt-4 w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
+          >
+            {isLoading ? t('generating') : t('generateQRCodesForExisting')}
+          </button>
         </div>
       </div>
 
@@ -160,7 +235,7 @@ function TableManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tables.map(table => (
+          {tables.map((table) => (
             <div key={table.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
@@ -169,16 +244,51 @@ function TableManagement() {
                   </div>
                   <span className="text-gray-800">{t('table')} {table.table_number}</span>
                 </div>
-                <button
-                  onClick={() => deleteTable(table.table_number)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                  title={t('deleteTable')}
-                >
-                  <FiTrash2 className="h-5 w-5" />
-                </button>
+                <div className="flex items-center">
+                  {table.qr_code_path ? (
+                    <img
+                      src={`${BASE_URL}${table.qr_code_path}`}
+                      alt={`QR code for table ${table.table_number}`}
+                      className="h-8 w-8 cursor-pointer"
+                      onClick={() => showQRCode(`${BASE_URL}${table.qr_code_path}`)}
+                      onError={() => console.log(`Failed to load QR for table ${table.table_number}: ${BASE_URL}${table.qr_code_path}`)}
+                    />
+                  ) : (
+                    <span className="text-gray-500 text-sm">{t('noQRCode')}</span>
+                  )}
+                  <button
+                    onClick={() => deleteTable(table.table_number)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors ml-2"
+                    title={t('deleteTable')}
+                  >
+                    <FiTrash2 className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {selectedQR && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeQRModal}>
+          <div className="bg-white p-6 rounded-lg" onClick={(e) => e.stopPropagation()}>
+            <img src={selectedQR} alt="Large QR code" className="w-64 h-64 mb-4" />
+            <div className="flex justify-between">
+              <button
+                onClick={downloadQRCode}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                {t('download')}
+              </button>
+              <button
+                onClick={closeQRModal}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                {t('close')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

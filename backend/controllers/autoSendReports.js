@@ -3,6 +3,7 @@ const cron = require('node-cron');
 const pdf = require('html-pdf');
 const nodemailer = require('nodemailer');
 const reportData = require('../helpers/reportData');
+const db = require('../databasemenu');
 
 // Reuse the same HTML template you have in your manual sender
 const generateHTML = (data) => `
@@ -27,8 +28,25 @@ const generateHTML = (data) => `
 
 // Core auto‐send function
 async function autoSend(period, date) {
-  // You can read this from .env or hardcode
-  const email = process.env.AUTO_REPORT_EMAIL || process.env.EMAIL_USER;
+  // Fetch all enabled report receivers for this period
+  const periodCol =
+    period === 'daily' ? 'receive_daily' :
+    period === 'monthly' ? 'receive_monthly' :
+    period === 'yearly' ? 'receive_yearly' : null;
+  if (!periodCol) throw new Error('Invalid period for autoSend');
+
+  // Get all receivers for this period
+  const receivers = await new Promise((resolve, reject) => {
+    db.query(
+      `SELECT a.email FROM report_receivers r JOIN admins a ON r.admin_id = a.id WHERE r.${periodCol} = 1 AND a.email IS NOT NULL AND a.email != ''`,
+      (err, rows) => err ? reject(err) : resolve(rows)
+    );
+  });
+  const emails = receivers.map(r => r.email).filter(Boolean);
+  if (!emails.length) {
+    console.log(`No report receivers found for period ${period}. Skipping send.`);
+    return;
+  }
 
   // Fetch data
   const data = await reportData.getReport(period, date);
@@ -53,7 +71,7 @@ async function autoSend(period, date) {
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: email,
+    to: emails,
     subject: `Automatic ${period.charAt(0).toUpperCase() + period.slice(1)} Report - ${date}`,
     text: `Please find attached the automatic ${period} report for ${date}.`,
     attachments: [
@@ -61,7 +79,7 @@ async function autoSend(period, date) {
     ]
   });
 
-  console.log(`✅ Sent automatic ${period} report for ${date} to ${email}`);
+  console.log(`✅ Sent automatic ${period} report for ${date} to: ${emails.join(', ')}`);
 }
 
 // Schedule jobs:
