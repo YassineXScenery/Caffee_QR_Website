@@ -7,8 +7,8 @@ import Footer from './Footer';
 import { useTranslation } from 'react-i18next';
 import './MenuDisplay.css';
 
-const API_URL = 'http://localhost:3000/api';
-const BASE_URL = API_URL.replace('/api', '') + '/';
+const API_URL = 'http://localhost:3000/api/call-waiter';
+const BASE_URL = API_URL.replace('/api/call-waiter', '') + '/';
 
 function MenuDisplay() {
   const { t, i18n } = useTranslation();
@@ -22,13 +22,17 @@ function MenuDisplay() {
   const [feedbackError, setFeedbackError] = useState(null);
   const [feedbackSuccess, setFeedbackSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tableNumber, setTableNumber] = useState('');
   const [showDialog, setShowDialog] = useState(false);
+  const [manualTableNumber, setManualTableNumber] = useState('');
   const [callWaiterError, setCallWaiterError] = useState(null);
   const [callWaiterSuccess, setCallWaiterSuccess] = useState(null);
   const [isCallWaiterDisabled, setIsCallWaiterDisabled] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
   const [callWaiterEnabled, setCallWaiterEnabled] = useState(true);
+
+  // Extract table number from URL
+  const queryParams = new URLSearchParams(window.location.search);
+  const tableNumber = parseInt(queryParams.get('table'), 10);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -36,8 +40,8 @@ function MenuDisplay() {
       setError(null);
       try {
         const [categoriesResponse, itemsResponse] = await Promise.all([
-          axios.get(`${API_URL}/menu`, { headers: { Authorization: undefined } }),
-          axios.get(`${API_URL}/items`, { headers: { Authorization: undefined } }),
+          axios.get(`${API_URL.replace('/call-waiter', '')}/menu`, { headers: { Authorization: undefined } }),
+          axios.get(`${API_URL.replace('/call-waiter', '')}/items`, { headers: { Authorization: undefined } }),
         ]);
 
         const categoryImageMap = categoriesResponse.data.reduce((acc, category) => {
@@ -76,6 +80,7 @@ function MenuDisplay() {
 
     fetchMenu();
 
+    // Cooldown logic
     const cooldownEndTime = localStorage.getItem('callWaiterCooldownEnd');
     if (cooldownEndTime) {
       const endTime = parseInt(cooldownEndTime, 10);
@@ -105,7 +110,8 @@ function MenuDisplay() {
       }
     }
 
-    axios.get(`${API_URL}/footer`).then((res) => {
+    // Fetch callWaiterEnabled setting
+    axios.get(`${API_URL.replace('/call-waiter', '')}/footer`).then((res) => {
       setCallWaiterEnabled(res.data?.features?.callWaiterEnabled !== false);
     });
   }, [t]);
@@ -137,7 +143,7 @@ function MenuDisplay() {
     setIsSubmitting(true);
 
     try {
-      await axios.post(`${API_URL}/feedback`, { message: feedback }, { headers: { Authorization: undefined } });
+      await axios.post(`${API_URL.replace('/call-waiter', '')}/feedback`, { message: feedback }, { headers: { Authorization: undefined } });
       setFeedbackSuccess(t('feedbackSuccess'));
       setFeedback('');
       setTimeout(() => setFeedbackSuccess(null), 3000);
@@ -151,8 +157,16 @@ function MenuDisplay() {
 
   const handleCallWaiter = async (e) => {
     e.preventDefault();
-    const parsedTableNumber = parseInt(tableNumber, 10);
-    if (!parsedTableNumber || isNaN(parsedTableNumber)) {
+    let numberToUse;
+
+    // Use URL table number if valid, otherwise use manual input
+    if (tableNumber && !isNaN(tableNumber) && tableNumber >= 1) {
+      numberToUse = tableNumber;
+    } else if (manualTableNumber) {
+      numberToUse = parseInt(manualTableNumber, 10);
+    }
+
+    if (!numberToUse || isNaN(numberToUse) || numberToUse < 1) {
       setCallWaiterError(t('invalidTableNumber'));
       return;
     }
@@ -161,10 +175,10 @@ function MenuDisplay() {
     setCallWaiterSuccess(null);
 
     try {
-      await axios.post(`${API_URL}/call-waiter`, { tableNumber: parsedTableNumber });
-      setCallWaiterSuccess(t('waiterCalled'));
+      const response = await axios.post(`${API_URL}/callwaiter`, { table_number: numberToUse });
+      setCallWaiterSuccess(response.data.message);
       setShowDialog(false);
-      setTableNumber('');
+      setManualTableNumber('');
       setIsCallWaiterDisabled(true);
       setCooldownTime(60);
 
@@ -191,6 +205,16 @@ function MenuDisplay() {
     }
   };
 
+  const handleCallWaiterClick = () => {
+    if (tableNumber && !isNaN(tableNumber) && tableNumber >= 1) {
+      // Valid table number in URL, call waiter directly
+      handleCallWaiter({ preventDefault: () => {} });
+    } else {
+      // No valid table number, show dialog
+      setShowDialog(true);
+    }
+  };
+
   return (
     <NotificationProvider>
       <div
@@ -203,16 +227,14 @@ function MenuDisplay() {
               <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
                 {t('menuTitle')}
               </h1>
-              <div className="flex justify-center items-center space-x-4">
-                <p className="text-lg text-blue-600 max-w-2xl">
-                  {t('menuSubtitle')}
-                </p>
-                {localStorage.getItem('token') && <NotificationBell />}
-              </div>
+              <p className="text-lg text-blue-600 max-w-2xl mx-auto">
+                {t('menuSubtitle')}
+              </p>
+              {localStorage.getItem('token') && <NotificationBell />}
               {callWaiterEnabled && (
                 <>
                   <button
-                    onClick={() => setShowDialog(true)}
+                    onClick={handleCallWaiterClick}
                     disabled={isCallWaiterDisabled}
                     className={`mt-6 px-6 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all flex items-center mx-auto shadow-md ${
                       isCallWaiterDisabled 
@@ -226,6 +248,11 @@ function MenuDisplay() {
                   {callWaiterSuccess && (
                     <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg max-w-md mx-auto animate-pulse">
                       <p className="text-sm text-green-600">{callWaiterSuccess}</p>
+                    </div>
+                  )}
+                  {callWaiterError && (
+                    <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg max-w-md mx-auto">
+                      <p className="text-sm text-red-600">{callWaiterError}</p>
                     </div>
                   )}
                 </>
@@ -243,8 +270,8 @@ function MenuDisplay() {
                       <input
                         type="number"
                         id="tableNumber"
-                        value={tableNumber}
-                        onChange={(e) => setTableNumber(e.target.value)}
+                        value={manualTableNumber}
+                        onChange={(e) => setManualTableNumber(e.target.value)}
                         placeholder={t('tableNumberPlaceholder')}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                         min="1"
@@ -266,7 +293,7 @@ function MenuDisplay() {
                         type="button"
                         onClick={() => {
                           setShowDialog(false);
-                          setTableNumber('');
+                          setManualTableNumber('');
                           setCallWaiterError(null);
                         }}
                         className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors"
