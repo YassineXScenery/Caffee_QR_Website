@@ -18,6 +18,7 @@ const expensesRoutes = require('./routes/expenses');
 const analyticsRoutes = require('./routes/analytics');
 const sendReportRoute = require('./routes/sendReport');
 const reportReceiverRoutes = require('./routes/reportReceiverRoutes');
+const wastageRoutes = require('./routes/wastage');
 console.log('sendReport route imported');
 require('dotenv').config();
 require('./controllers/autoSendReports');
@@ -103,6 +104,7 @@ app.use('/api/expenses', expensesRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/send-report', sendReportRoute);
 app.use('/api', reportReceiverRoutes);
+app.use('/api/wastage', wastageRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

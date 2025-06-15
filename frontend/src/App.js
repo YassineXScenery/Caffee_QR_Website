@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-ro
 import { FiHome } from 'react-icons/fi';
 import Login from './components/Login';
 import MenuDisplay from './components/MenuDisplay';
+import AnalyticsPage from './components/AnalyticsPage';
 import StockPage from './components/StockPage';
 import ExpensePage from './components/ExpensePage';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
@@ -91,7 +92,8 @@ function MainApp() {
         <Route path="/kitchen/tables" element={<ProtectedRoute allowedRoles={['Owner']}><TableManagement /></ProtectedRoute>} />
         <Route path="/kitchen/call-waiter" element={<ProtectedRoute allowedRoles={['Owner']}><CallWaiterManagement /></ProtectedRoute>} />
         <Route path="/kitchen" element={<ProtectedRoute allowedRoles={['Owner']}><KitchenPage navigate={navigate} /></ProtectedRoute>} />
-        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['Owner', 'Manager']}><AnalyticsDashboard /></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['Owner', 'Manager']}><AnalyticsPage /></ProtectedRoute>} />
+        <Route path="/analytics" element={<Navigate to="/admin/analytics" replace />} />
         <Route path="/admin/stock" element={<ProtectedRoute allowedRoles={['Owner']}><StockPage /></ProtectedRoute>} />
         <Route path="/admin/expenses" element={<ProtectedRoute allowedRoles={['Owner']}><ExpensePage /></ProtectedRoute>} />
         <Route path="/admin/report" element={<ProtectedRoute allowedRoles={['Owner']}><ReportGenerator /></ProtectedRoute>} />
@@ -121,7 +123,7 @@ function MainApp() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
-  );
+  )
 }
 
 function App() {
